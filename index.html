@@ -2261,5 +2261,40 @@
         }
       };
     </script>
+    
+    <!-- Плавающая кнопка тестирования автообновления -->
+    <div id="autoUpdateTestButton" style="
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      z-index: 9999;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 15px 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+      font-weight: bold;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      user-select: none;
+    " onclick="
+      console.log('🧪 Тест автообновления...');
+      if (window.forceStartAutoUpdate) {
+        window.forceStartAutoUpdate();
+        this.style.background = '#007bff';
+        this.innerHTML = '✅ Запущено!';
+        setTimeout(() => {
+          this.style.background = '#28a745';
+          this.innerHTML = '🔄 Тест авто-обновления';
+        }, 2000);
+      } else {
+        alert('Функция автообновления не найдена!');
+      }
+    " onmouseover="this.style.transform = 'scale(1.1)'" onmouseout="this.style.transform = 'scale(1)'">
+      🔄 Тест авто-обновления
+    </div>
+    
   </body>
 </html>
