@@ -15,52 +15,48 @@ window.forceStartAutoUpdate = function() {
   
   window.simpleAutoUpdateInterval = setInterval(() => {
     window.autoUpdateCounter++;
-    const timestamp = new Date().toLocaleTimeString();
-    console.log(`💰 АВТООБНОВЛЕНИЕ #${window.autoUpdateCounter} в ${timestamp}`);
+    
+    // Логируем только каждое 10-е обновление, чтобы не засорять консоль
+    if (window.autoUpdateCounter % 10 === 1) {
+      const timestamp = new Date().toLocaleTimeString();
+      console.log(`💰 АВТООБНОВЛЕНИЕ #${window.autoUpdateCounter} в ${timestamp} (показываем каждое 10-е)`);
+    }
     
     try {
       // Ищем и вызываем функцию updateDashboard
       if (typeof window.updateDashboard === 'function') {
         window.updateDashboard();
-        console.log('✅ window.updateDashboard() выполнен');
+        // Убираем лог для каждого вызова
       } else if (typeof updateDashboard === 'function') {
         updateDashboard();
-        console.log('✅ updateDashboard() выполнен (без window)');
-      } else {
-        console.log('⚠️ updateDashboard не найден');
+        // Убираем лог для каждого вызова
       }
-      
-      // Пытаемся найти и обновить баланс напрямую
-      const balanceElements = document.querySelectorAll('.balance-amount, [data-balance], #currentBalance, .balance');
-      console.log(`📊 Найдено элементов баланса: ${balanceElements.length}`);
       
       // Принудительно пересчитываем баланс
       try {
         const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
         const totalBalance = transactions.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        console.log(`💰 Пересчитанный баланс: ${totalBalance.toFixed(2)} zł`);
         
         // Обновляем все найденные элементы баланса
-        balanceElements.forEach((element, index) => {
-          const oldValue = element.textContent;
+        const balanceElements = document.querySelectorAll('.balance-amount, [data-balance], #currentBalance, .balance');
+        balanceElements.forEach((element) => {
           element.textContent = `${totalBalance.toFixed(2)} zł`;
-          console.log(`📊 Элемент #${index}: "${oldValue}" → "${element.textContent}"`);
         });
         
         // Ищем элемент общего баланса
         const mainBalanceElement = document.querySelector('.balance-card .balance-amount, .main-balance, [data-main-balance]');
         if (mainBalanceElement) {
           mainBalanceElement.textContent = `${totalBalance.toFixed(2)} zł`;
-          console.log('📊 Главный баланс обновлен');
         }
         
       } catch (error) {
-        console.log('⚠️ Ошибка пересчета баланса:', error.message);
+        if (window.autoUpdateCounter % 20 === 1) {
+          console.log('⚠️ Ошибка пересчета баланса:', error.message);
+        }
       }
       
       // Отправляем событие обновления
       window.dispatchEvent(new Event('balanceUpdated'));
-      console.log('📡 Событие balanceUpdated отправлено');
       
     } catch (error) {
       console.error('❌ Ошибка автообновления:', error);
@@ -5657,11 +5653,13 @@ function toggleAutoUpdate() {
   
   try {
     // Проверяем простое автообновление в первую очередь
-    if (simpleAutoUpdateInterval) {
+    if (window.simpleAutoUpdateInterval) {
       // Простое автообновление включено - выключаем
       stopSimpleAutoUpdate();
       updateAutoUpdateUI(false);
-      showNotification('💰 Автообновление баланса выключено');
+      if (typeof showNotification === 'function') {
+        showNotification('💰 Автообновление выключено', 'info', 1500);
+      }
     } else if (window.firebaseSync && window.firebaseSync.balanceUpdateInterval) {
       // Firebase автообновление включено - выключаем
       if (window.stopBalanceAutoUpdate) {
@@ -5670,16 +5668,20 @@ function toggleAutoUpdate() {
         window.firebaseSync.stopBalanceAutoUpdate();
       }
       updateAutoUpdateUI(false);
-      showNotification('💰 Автообновление баланса выключено');
+      if (typeof showNotification === 'function') {
+        showNotification('💰 Автообновление выключено', 'info', 1500);
+      }
     } else {
-      // Автообновление выключено - включаем простое
+      // Автообновление выключено - включаем простое (БЕЗ уведомления)
       startSimpleAutoUpdate();
       updateAutoUpdateUI(true);
-      showNotification('💰 Автообновление баланса включено');
+      console.log('✅ Автообновление включено тихо');
     }
   } catch (error) {
     console.error('❌ Ошибка переключения автообновления:', error);
-    showNotification('❌ Ошибка управления автообновлением', 'error');
+    if (typeof showNotification === 'function') {
+      showNotification('❌ Ошибка управления автообновлением', 'error', 2000);
+    }
   }
 }
 
@@ -5712,10 +5714,9 @@ function checkAutoUpdateStatus() {
   const message = `Статус автообновления: ${status}`;
   console.log(message);
   
+  // Показываем уведомление только при ручной проверке, не автоматически
   if (typeof showNotification === 'function') {
-    showNotification(message);
-  } else {
-    alert(message);
+    showNotification(message, 'info', 2000); // Короткое уведомление
   }
   
   // Дополнительная диагностика
@@ -5723,7 +5724,7 @@ function checkAutoUpdateStatus() {
   console.log(`🔍 Счетчик обновлений:`, window.autoUpdateCounter || 0);
   console.log(`🔍 typeof updateDashboard:`, typeof window.updateDashboard);
   
-  // Если не активно, запускаем принудительно
+  // Если не активно, запускаем принудительно (БЕЗ уведомления)
   if (!isActive) {
     console.log('⚠️ Автообновление неактивно, запускаем принудительно...');
     window.forceStartAutoUpdate();
