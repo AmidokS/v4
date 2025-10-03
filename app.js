@@ -39,7 +39,7 @@ function updateBalance() {
     // Обновляем UI только если данные изменились
     if (dataChanged) {
       if (window.autoUpdateCounter % 10 === 1) {
-        console.log(`🔄 Данные изменились - плавно обновляем UI`);
+        console.log(`🔄 Данные изменились - обновляем только статистику (НЕ список операций)`);
       }
       
       // Небольшая задержка для плавности обновления
@@ -51,12 +51,12 @@ function updateBalance() {
           updateDashboard();
         }
         
-        // Обновляем список транзакций только при изменении данных
-        if (typeof renderTransactions === 'function') {
-          renderTransactions();
-        }
+        // НЕ ОБНОВЛЯЕМ список транзакций автоматически - только по действию пользователя
+        // if (typeof renderTransactions === 'function') {
+        //   renderTransactions();
+        // }
         
-        // Принудительно обновляем все основные элементы главной страницы
+        // Принудительно обновляем все основные элементы главной страницы (кроме списка)
         try {
           // Обновляем индикаторы бюджета
           if (typeof renderBudgetIndicators === 'function') {
@@ -134,6 +134,20 @@ window.startAutoUpdate = function() {
   
   console.log('✅ Умное автообновление запущено');
   return true;
+};
+
+// Глобальная функция для принудительного обновления списка транзакций
+window.forceUpdateTransactionsList = function() {
+  if (typeof renderTransactions === 'function') {
+    console.log('🔄 Принудительное обновление списка транзакций');
+    renderTransactions();
+    updateChartsAndStats();
+    renderBudgetIndicators();
+    
+    // Сбрасываем хеш, чтобы следующее автообновление не пропустило изменения
+    const latestTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    window.lastTransactionsHash = getTransactionsHash(latestTransactions);
+  }
 };
 
 // Функция остановки автообновления
@@ -1232,6 +1246,11 @@ function handleEditTransactionSubmit(e) {
     saveTransactions();
     closeModal("editTransactionModal");
     showNotification("Транзакция обновлена");
+    
+    // Обновляем список транзакций после редактирования
+    renderTransactions();
+    updateChartsAndStats();
+    renderBudgetIndicators();
   }
 }
 
@@ -1248,6 +1267,11 @@ function deleteTransaction() {
   saveTransactions(); // saveTransactions уже обновляет localStorage
   closeModal("editTransactionModal");
   showNotification("Транзакция удалена");
+  
+  // Обновляем список транзакций после удаления
+  renderTransactions();
+  updateChartsAndStats();
+  renderBudgetIndicators();
 }
 
 function editTransaction(id) {
