@@ -7,8 +7,17 @@ window.autoUpdateCounter = 0;
 // Функция обновления баланса
 function updateBalance() {
   try {
-    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    const totalBalance = transactions.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    // Обновляем глобальную переменную transactions
+    const latestTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    if (typeof window !== 'undefined' && window.transactions !== undefined) {
+      window.transactions = latestTransactions;
+    }
+    // Также обновляем локальную переменную transactions если она есть
+    if (typeof transactions !== 'undefined') {
+      transactions = latestTransactions;
+    }
+    
+    const totalBalance = latestTransactions.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     // Обновляем все элементы баланса
     const balanceElements = document.querySelectorAll('.balance-amount, [data-balance], #currentBalance, .balance');
@@ -21,6 +30,57 @@ function updateBalance() {
       window.updateDashboard();
     } else if (typeof updateDashboard === 'function') {
       updateDashboard();
+    }
+    
+    // Обновляем список транзакций если мы на главной странице
+    if (typeof displayTransactions === 'function') {
+      displayTransactions();
+    }
+    if (typeof renderTransactions === 'function') {
+      renderTransactions();
+    }
+    
+    // Принудительно обновляем все основные элементы главной страницы
+    try {
+      // Обновляем индикаторы бюджета
+      if (typeof renderBudgetIndicators === 'function') {
+        renderBudgetIndicators();
+      }
+      
+      // Обновляем общую статистику
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthTransactions = latestTransactions.filter((t) => {
+        if (!t.date) return false;
+        const transactionDate = new Date(t.date);
+        if (isNaN(transactionDate.getTime())) return false;
+        return (
+          transactionDate.getMonth() === currentMonth &&
+          transactionDate.getFullYear() === currentYear
+        );
+      });
+      
+      const totalIncome = monthTransactions
+        .filter((t) => t.type === "income")
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      
+      const totalExpense = monthTransactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      
+      // Обновляем элементы на странице
+      const incomeElement = document.getElementById('totalIncome');
+      if (incomeElement) {
+        incomeElement.textContent = `${totalIncome.toFixed(2)} zł`;
+      }
+      
+      const expenseElement = document.getElementById('totalExpense');
+      if (expenseElement) {
+        expenseElement.textContent = `${totalExpense.toFixed(2)} zł`;
+      }
+      
+    } catch (error) {
+      // Не логируем ошибки обновления UI, чтобы не засорять консоль
     }
     
     // Отправляем событие обновления
@@ -42,7 +102,7 @@ window.startAutoUpdate = function() {
     
     // Тихий режим - логируем только каждое 20-е обновление
     if (window.autoUpdateCounter % 20 === 1) {
-      console.log(`💰 Автообновление #${window.autoUpdateCounter}`);
+      console.log(`💰 Автообновление #${window.autoUpdateCounter} - обновляем главную страницу`);
     }
     
     updateBalance();
@@ -2169,8 +2229,13 @@ function updateDashboard() {
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
 
-  // Используем все транзакции (больше нет фильтрации по пользователю)
-  let userTransactions = transactions;
+  // Всегда берем свежие данные из localStorage
+  let userTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+  
+  // Обновляем глобальную переменную transactions
+  if (typeof transactions !== 'undefined') {
+    transactions = userTransactions;
+  }
 
   // Расчеты за текущий месяц
   const monthTransactions = userTransactions.filter((t) => {
@@ -4218,7 +4283,8 @@ function applyAdvancedFilters() {
 
 // Получение отфильтрованных транзакций
 function getFilteredTransactions() {
-  let filtered = [...transactions];
+  // Всегда берем свежие данные из localStorage
+  let filtered = [...(JSON.parse(localStorage.getItem('transactions') || '[]'))];
   
   // Применяем обычные фильтры (месяц, день) - только если элементы существуют
   const filterMonthElement = document.getElementById("filterMonth");
