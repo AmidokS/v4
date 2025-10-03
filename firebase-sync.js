@@ -87,6 +87,10 @@ class FirebaseSync {
       
       // Включаем локальный режим без синхронизации
       this.isInitialized = false;
+      
+      // Но все равно запускаем автообновление баланса для локального режима
+      this.startBalanceAutoUpdate();
+      
       return false;
     }
   }
@@ -250,18 +254,28 @@ class FirebaseSync {
 
   // Запуск автоматического обновления баланса
   startBalanceAutoUpdate() {
+    console.log('🔄 Попытка запуска автообновления баланса...');
+    
     // Останавливаем предыдущий интервал если есть
     this.stopBalanceAutoUpdate();
     
     // Обновляем баланс каждые 1.5 секунды
     this.balanceUpdateInterval = setInterval(() => {
+      console.log('💰 Выполняем автообновление баланса...');
       this.updateBalance();
     }, 1500);
     
     console.log('💰 Автоматическое обновление баланса запущено (каждые 1.5 сек)');
+    console.log('🆔 ID интервала:', this.balanceUpdateInterval);
     
     // Показываем индикатор автоматического обновления
     this.showBalanceAutoUpdateIndicator(true);
+    
+    // Выполняем первое обновление сразу
+    setTimeout(() => {
+      console.log('💰 Первое автообновление баланса...');
+      this.updateBalance();
+    }, 100);
   }
 
   // Остановка автоматического обновления баланса
@@ -309,33 +323,54 @@ class FirebaseSync {
 
   // Обновление баланса и интерфейса
   updateBalance() {
+    console.log('🔄 Начинаем обновление баланса...');
+    let updatesExecuted = 0;
+    
     try {
       // Обновляем дашборд если функция доступна
       if (typeof window.updateDashboard === 'function') {
+        console.log('📊 Вызываем updateDashboard()');
         window.updateDashboard();
+        updatesExecuted++;
+      } else {
+        console.log('⚠️ updateDashboard не найден');
       }
       
       // Пересчитываем баланс если функция доступна  
       if (typeof window.calculateBalance === 'function') {
+        console.log('🧮 Вызываем calculateBalance()');
         window.calculateBalance();
+        updatesExecuted++;
+      } else {
+        console.log('⚠️ calculateBalance не найден');
       }
       
       // Обновляем баланс если функция доступна
       if (typeof window.updateBalance === 'function') {
+        console.log('💰 Вызываем updateBalance()');
         window.updateBalance();
+        updatesExecuted++;
+      } else {
+        console.log('⚠️ updateBalance не найден');
       }
       
       // Обновляем историю транзакций если функция доступна
       if (typeof window.renderTransactionHistory === 'function') {
+        console.log('📋 Вызываем renderTransactionHistory()');
         window.renderTransactionHistory();
+        updatesExecuted++;
+      } else {
+        console.log('⚠️ renderTransactionHistory не найден');
       }
       
       // Отправляем событие обновления
       window.dispatchEvent(new Event('balanceUpdated'));
+      console.log('📡 Отправлено событие balanceUpdated');
+      
+      console.log(`✅ Обновление баланса завершено. Выполнено функций: ${updatesExecuted}`);
       
     } catch (error) {
-      // Не логируем ошибки чтобы не засорять консоль
-      // console.error('❌ Ошибка обновления баланса:', error);
+      console.error('❌ Ошибка обновления баланса:', error);
     }
   }
 
@@ -1201,9 +1236,62 @@ if (document.readyState === 'loading') {
     setTimeout(() => {
       window.initFirebaseSync();
     }, 1000);
+    
+    // Резервный запуск автообновления через 5 секунд
+    setTimeout(() => {
+      console.log('🔄 Резервная проверка автообновления...');
+      if (window.firebaseSync && !window.firebaseSync.balanceUpdateInterval) {
+        console.log('⚠️ Автообновление не запущено, запускаем принудительно');
+        window.firebaseSync.startBalanceAutoUpdate();
+      } else if (!window.firebaseSync) {
+        console.log('⚠️ FirebaseSync не найден, создаем резервное автообновление');
+        createFallbackAutoUpdate();
+      }
+    }, 5000);
   });
 } else {
   setTimeout(() => {
     window.initFirebaseSync();
   }, 1000);
+  
+  // Резервный запуск автообновления через 5 секунд
+  setTimeout(() => {
+    console.log('🔄 Резервная проверка автообновления...');
+    if (window.firebaseSync && !window.firebaseSync.balanceUpdateInterval) {
+      console.log('⚠️ Автообновление не запущено, запускаем принудительно');
+      window.firebaseSync.startBalanceAutoUpdate();
+    } else if (!window.firebaseSync) {
+      console.log('⚠️ FirebaseSync не найден, создаем резервное автообновление');
+      createFallbackAutoUpdate();
+    }
+  }, 5000);
+}
+
+// Резервное автообновление если Firebase не работает
+function createFallbackAutoUpdate() {
+  console.log('🔄 Создаем резервное автообновление баланса...');
+  
+  if (window.fallbackBalanceInterval) {
+    clearInterval(window.fallbackBalanceInterval);
+  }
+  
+  window.fallbackBalanceInterval = setInterval(() => {
+    console.log('💰 Резервное автообновление баланса...');
+    
+    // Вызываем доступные функции обновления
+    if (typeof window.updateDashboard === 'function') {
+      window.updateDashboard();
+    }
+    if (typeof window.calculateBalance === 'function') {
+      window.calculateBalance();
+    }
+    if (typeof window.renderTransactionHistory === 'function') {
+      window.renderTransactionHistory();
+    }
+    
+    // Отправляем событие
+    window.dispatchEvent(new Event('balanceUpdated'));
+  }, 1500);
+  
+  console.log('✅ Резервное автообновление баланса запущено');
 }

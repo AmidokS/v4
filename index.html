@@ -482,6 +482,35 @@
             </button>
           </div>
           
+          <!-- Настройки автообновления баланса -->
+          <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--card-border);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <span>💰</span>
+              <strong>Автообновление баланса</strong>
+              <span id="autoUpdateStatus" style="color: var(--text-muted); font-size: 0.8em;"></span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9em; margin: 0 0 10px 0;">
+              Автоматическое обновление баланса каждые 1.5 секунды без перезагрузки страницы
+            </p>
+            <div style="display: flex; gap: 10px;">
+              <button
+                id="autoUpdateToggle"
+                onclick="toggleAutoUpdate()"
+                class="btn btn-primary"
+                style="flex: 1; font-size: 0.8em;"
+              >
+                🔄 Включить автообновление
+              </button>
+              <button
+                onclick="checkAutoUpdateStatus()"
+                class="btn btn-info"
+                style="flex: 1; font-size: 0.8em;"
+              >
+                🔍 Проверить статус
+              </button>
+            </div>
+          </div>
+          
           <div style="display: flex; gap: 10px; margin-top: 5px;">
             <button
               onclick="resetDeletedTransactions()"

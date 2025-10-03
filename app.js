@@ -5453,3 +5453,148 @@ setInterval(() => {
     updateSyncInterface();
   }
 }, 10000);
+
+// ========== УПРАВЛЕНИЕ АВТООБНОВЛЕНИЕМ БАЛАНСА ==========
+
+function toggleAutoUpdate() {
+  console.log('🔄 Переключение автообновления баланса...');
+  
+  try {
+    if (window.firebaseSync && window.firebaseSync.balanceUpdateInterval) {
+      // Автообновление включено - выключаем
+      if (window.stopBalanceAutoUpdate) {
+        window.stopBalanceAutoUpdate();
+      } else {
+        window.firebaseSync.stopBalanceAutoUpdate();
+      }
+      updateAutoUpdateUI(false);
+      showNotification('💰 Автообновление баланса выключено');
+    } else {
+      // Автообновление выключено - включаем
+      if (window.startBalanceAutoUpdate) {
+        window.startBalanceAutoUpdate();
+      } else if (window.firebaseSync) {
+        window.firebaseSync.startBalanceAutoUpdate();
+      } else {
+        // Создаем резервное автообновление
+        createFallbackAutoUpdate();
+      }
+      updateAutoUpdateUI(true);
+      showNotification('💰 Автообновление баланса включено');
+    }
+  } catch (error) {
+    console.error('❌ Ошибка переключения автообновления:', error);
+    showNotification('❌ Ошибка управления автообновлением', 'error');
+  }
+}
+
+function checkAutoUpdateStatus() {
+  console.log('🔍 Проверка статуса автообновления...');
+  
+  let status = 'Неизвестно';
+  let isActive = false;
+  
+  if (window.firebaseSync && window.firebaseSync.balanceUpdateInterval) {
+    status = '✅ Активно (через FirebaseSync)';
+    isActive = true;
+  } else if (window.fallbackBalanceInterval) {
+    status = '✅ Активно (резервное)';
+    isActive = true;
+  } else {
+    status = '❌ Неактивно';
+    isActive = false;
+  }
+  
+  updateAutoUpdateUI(isActive);
+  
+  const message = `Статус автообновления: ${status}`;
+  console.log(message);
+  showNotification(message);
+  
+  // Дополнительная диагностика
+  const functions = ['updateDashboard', 'calculateBalance', 'updateBalance', 'renderTransactionHistory'];
+  let foundFunctions = 0;
+  
+  functions.forEach(func => {
+    if (typeof window[func] === 'function') {
+      foundFunctions++;
+    }
+  });
+  
+  console.log(`🔍 Доступных функций обновления: ${foundFunctions}/${functions.length}`);
+}
+
+function updateAutoUpdateUI(isActive) {
+  const toggleButton = document.getElementById('autoUpdateToggle');
+  const statusSpan = document.getElementById('autoUpdateStatus');
+  
+  if (toggleButton) {
+    if (isActive) {
+      toggleButton.textContent = '⏸️ Выключить автообновление';
+      toggleButton.className = 'btn btn-warning';
+    } else {
+      toggleButton.textContent = '▶️ Включить автообновление';
+      toggleButton.className = 'btn btn-primary';
+    }
+  }
+  
+  if (statusSpan) {
+    if (isActive) {
+      statusSpan.textContent = '(активно)';
+      statusSpan.style.color = '#28a745';
+    } else {
+      statusSpan.textContent = '(неактивно)';
+      statusSpan.style.color = '#dc3545';
+    }
+  }
+}
+
+// Резервное автообновление если Firebase не работает
+function createFallbackAutoUpdate() {
+  console.log('🔄 Создаем резервное автообновление баланса...');
+  
+  if (window.fallbackBalanceInterval) {
+    clearInterval(window.fallbackBalanceInterval);
+  }
+  
+  window.fallbackBalanceInterval = setInterval(() => {
+    console.log('💰 Резервное автообновление баланса...');
+    
+    // Вызываем доступные функции обновления
+    try {
+      if (typeof updateDashboard === 'function') {
+        updateDashboard();
+      }
+      if (typeof calculateBalance === 'function') {
+        calculateBalance();
+      }
+      if (typeof renderTransactionHistory === 'function') {
+        renderTransactionHistory();
+      }
+      
+      // Отправляем событие
+      window.dispatchEvent(new Event('balanceUpdated'));
+    } catch (error) {
+      console.error('❌ Ошибка резервного автообновления:', error);
+    }
+  }, 1500);
+  
+  console.log('✅ Резервное автообновление баланса запущено');
+}
+
+// Инициализация UI автообновления при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    checkAutoUpdateStatus();
+  }, 3000);
+  
+  // Периодически обновляем UI статус
+  setInterval(() => {
+    const statusSpan = document.getElementById('autoUpdateStatus');
+    if (statusSpan && statusSpan.offsetParent !== null) { // Элемент видим
+      const isActive = (window.firebaseSync && window.firebaseSync.balanceUpdateInterval) || 
+                      window.fallbackBalanceInterval;
+      updateAutoUpdateUI(isActive);
+    }
+  }, 5000);
+});
