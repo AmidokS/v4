@@ -3,107 +3,61 @@
 // Глобальные переменные для автообновления
 window.autoUpdateInterval = null;
 window.autoUpdateCounter = 0;
-window.lastTransactionsHash = null; // Для отслеживания изменений
-
-// Функция для создания хеша массива транзакций
-function getTransactionsHash(transactions) {
-  return JSON.stringify(transactions.map(t => ({ id: t.id, amount: t.amount, date: t.date })));
-}
 
 // Функция обновления баланса
 function updateBalance() {
   try {
-    // Обновляем глобальную переменную transactions
+    // ТОЛЬКО обновляем баланс и статистику - НЕ ТРОГАЕМ СПИСОК ТРАНЗАКЦИЙ
     const latestTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    const currentHash = getTransactionsHash(latestTransactions);
-    
-    // Проверяем, изменились ли данные
-    const dataChanged = window.lastTransactionsHash !== currentHash;
     
     if (typeof window !== 'undefined' && window.transactions !== undefined) {
       window.transactions = latestTransactions;
     }
-    // Также обновляем локальную переменную transactions если она есть
     if (typeof transactions !== 'undefined') {
       transactions = latestTransactions;
     }
     
     const totalBalance = latestTransactions.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
-    // Обновляем элементы баланса (всегда, так как это не вызывает "прыжков")
+    // Обновляем только баланс
     const balanceElements = document.querySelectorAll('.balance-amount, [data-balance], #currentBalance, .balance');
     balanceElements.forEach((element) => {
       element.textContent = `${totalBalance.toFixed(2)} zł`;
     });
     
-    // Обновляем UI только если данные изменились
-    if (dataChanged) {
-      if (window.autoUpdateCounter % 10 === 1) {
-        console.log(`🔄 Данные изменились - обновляем только статистику (НЕ список операций)`);
-      }
-      
-      // Небольшая задержка для плавности обновления
-      setTimeout(() => {
-        // Обновляем дашборд если функция есть
-        if (typeof window.updateDashboard === 'function') {
-          window.updateDashboard();
-        } else if (typeof updateDashboard === 'function') {
-          updateDashboard();
-        }
-        
-        // НЕ ОБНОВЛЯЕМ список транзакций автоматически - только по действию пользователя
-        // if (typeof renderTransactions === 'function') {
-        //   renderTransactions();
-        // }
-        
-        // Принудительно обновляем все основные элементы главной страницы (кроме списка)
-        try {
-          // Обновляем индикаторы бюджета
-          if (typeof renderBudgetIndicators === 'function') {
-            renderBudgetIndicators();
-          }
-          
-          // Обновляем общую статистику
-          const currentMonth = new Date().getMonth();
-          const currentYear = new Date().getFullYear();
-          const monthTransactions = latestTransactions.filter((t) => {
-            if (!t.date) return false;
-            const transactionDate = new Date(t.date);
-            if (isNaN(transactionDate.getTime())) return false;
-            return (
-              transactionDate.getMonth() === currentMonth &&
-              transactionDate.getFullYear() === currentYear
-            );
-          });
-          
-          const totalIncome = monthTransactions
-            .filter((t) => t.type === "income")
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-          
-          const totalExpense = monthTransactions
-            .filter((t) => t.type === "expense")
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-          
-          // Обновляем элементы на странице
-          const incomeElement = document.getElementById('totalIncome');
-          if (incomeElement) {
-            incomeElement.textContent = `${totalIncome.toFixed(2)} zł`;
-          }
-          
-          const expenseElement = document.getElementById('totalExpense');
-          if (expenseElement) {
-            expenseElement.textContent = `${totalExpense.toFixed(2)} zł`;
-          }
-          
-        } catch (error) {
-          // Не логируем ошибки обновления UI, чтобы не засорять консоль
-        }
-      }, 50); // Задержка 50мс для плавности
-      
-      window.lastTransactionsHash = currentHash;
+    // Обновляем только статистику (доходы/расходы)
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthTransactions = latestTransactions.filter((t) => {
+      if (!t.date) return false;
+      const transactionDate = new Date(t.date);
+      if (isNaN(transactionDate.getTime())) return false;
+      return (
+        transactionDate.getMonth() === currentMonth &&
+        transactionDate.getFullYear() === currentYear
+      );
+    });
+    
+    const totalIncome = monthTransactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    
+    const totalExpense = monthTransactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    
+    // Обновляем элементы статистики
+    const incomeElement = document.getElementById('totalIncome');
+    if (incomeElement) {
+      incomeElement.textContent = `${totalIncome.toFixed(2)} zł`;
     }
     
-    // Отправляем событие обновления (всегда)
+    const expenseElement = document.getElementById('totalExpense');
+    if (expenseElement) {
+      expenseElement.textContent = `${totalExpense.toFixed(2)} zł`;
+    }
+    
+    // Отправляем событие обновления баланса
     window.dispatchEvent(new Event('balanceUpdated'));
     
   } catch (error) {
@@ -117,36 +71,28 @@ window.startAutoUpdate = function() {
     clearInterval(window.autoUpdateInterval);
   }
   
-  // Инициализируем хеш при запуске
-  const initialTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-  window.lastTransactionsHash = getTransactionsHash(initialTransactions);
-  
   window.autoUpdateInterval = setInterval(() => {
     window.autoUpdateCounter++;
     
-    // Тихий режим - логируем только каждое 20-е обновление
-    if (window.autoUpdateCounter % 20 === 1) {
-      console.log(`💰 Автообновление #${window.autoUpdateCounter} - проверяем изменения`);
+    // Тихий режим - логируем только каждое 30-е обновление
+    if (window.autoUpdateCounter % 30 === 1) {
+      console.log(`💰 Тихое автообновление #${window.autoUpdateCounter} - только баланс и статистика`);
     }
     
-    updateBalance();
+    updateBalance(); // Только баланс и статистика, НЕ список транзакций
   }, 2000); // Каждые 2 секунды
   
-  console.log('✅ Умное автообновление запущено');
+  console.log('✅ Тихое автообновление запущено (только баланс)');
   return true;
 };
 
 // Глобальная функция для принудительного обновления списка транзакций
 window.forceUpdateTransactionsList = function() {
   if (typeof renderTransactions === 'function') {
-    console.log('🔄 Принудительное обновление списка транзакций');
+    console.log('🔄 Принудительное обновление списка транзакций (по запросу)');
     renderTransactions();
     updateChartsAndStats();
     renderBudgetIndicators();
-    
-    // Сбрасываем хеш, чтобы следующее автообновление не пропустило изменения
-    const latestTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    window.lastTransactionsHash = getTransactionsHash(latestTransactions);
   }
 };
 
