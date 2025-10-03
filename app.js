@@ -6,6 +6,32 @@ window.autoUpdateCounter = 0;
 window.lastTransactionsCount = 0; // Для отслеживания изменений количества транзакций
 window.lastTransactionsHash = null; // Для отслеживания изменений содержимого
 
+// Определение мобильного устройства
+function isMobileDevice() {
+  // Проверяем user agent
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+  
+  // Проверяем touch support
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // Проверяем размер экрана (учитываем высокие разрешения современных флагманов)
+  const screenWidth = window.screen.width;
+  const viewportWidth = window.innerWidth;
+  const isNarrowScreen = Math.min(screenWidth, viewportWidth) < 1200;
+  
+  return mobileRegex.test(userAgent) || (hasTouch && isNarrowScreen);
+}
+
+// Добавляем класс для мобильных устройств
+if (isMobileDevice()) {
+  document.documentElement.classList.add('mobile-device');
+  console.log('📱 Обнаружено мобильное устройство');
+} else {
+  document.documentElement.classList.add('desktop-device');
+  console.log('🖥️ Обнаружено десктопное устройство');
+}
+
 // Функция создания простого хеша для транзакций
 function createTransactionsHash(transactions) {
   return transactions.map(t => `${t.id}_${t.amount}_${t.date}`).sort().join('|');
