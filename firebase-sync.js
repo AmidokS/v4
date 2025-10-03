@@ -8,6 +8,7 @@ class FirebaseSync {
     this.lastSyncTime = localStorage.getItem('lastSyncTime') || 0;
     this.isDeleting = false; // Флаг для блокировки слушателей во время удаления
     this.deletingTransactions = new Set(); // Множество ID транзакций в процессе удаления
+    this.balanceUpdateInterval = null; // Интервал автоматического обновления баланса
     
     // Конфигурация Firebase (ЗАМЕНИТЕ НА ВАШУ)
     this.firebaseConfig = {
@@ -76,6 +77,9 @@ class FirebaseSync {
       if (this.isOnline) {
         await this.syncToFirebase();
       }
+      
+      // Запуск автоматического обновления баланса
+      this.startBalanceAutoUpdate();
       
     } catch (error) {
       console.error('❌ Ошибка инициализации Firebase:', error);
@@ -241,6 +245,97 @@ class FirebaseSync {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
       console.log('💔 Heartbeat остановлен');
+    }
+  }
+
+  // Запуск автоматического обновления баланса
+  startBalanceAutoUpdate() {
+    // Останавливаем предыдущий интервал если есть
+    this.stopBalanceAutoUpdate();
+    
+    // Обновляем баланс каждые 1.5 секунды
+    this.balanceUpdateInterval = setInterval(() => {
+      this.updateBalance();
+    }, 1500);
+    
+    console.log('💰 Автоматическое обновление баланса запущено (каждые 1.5 сек)');
+    
+    // Показываем индикатор автоматического обновления
+    this.showBalanceAutoUpdateIndicator(true);
+  }
+
+  // Остановка автоматического обновления баланса
+  stopBalanceAutoUpdate() {
+    if (this.balanceUpdateInterval) {
+      clearInterval(this.balanceUpdateInterval);
+      this.balanceUpdateInterval = null;
+      console.log('💰 Автоматическое обновление баланса остановлено');
+      
+      // Скрываем индикатор автоматического обновления
+      this.showBalanceAutoUpdateIndicator(false);
+    }
+  }
+
+  // Показ/скрытие индикатора автоматического обновления
+  showBalanceAutoUpdateIndicator(show) {
+    let indicator = document.getElementById('balanceAutoUpdateIndicator');
+    
+    if (show) {
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'balanceAutoUpdateIndicator';
+        indicator.style.position = 'fixed';
+        indicator.style.bottom = '10px';
+        indicator.style.right = '10px';
+        indicator.style.zIndex = '9999';
+        indicator.style.padding = '5px 10px';
+        indicator.style.borderRadius = '15px';
+        indicator.style.fontSize = '11px';
+        indicator.style.backgroundColor = '#4CAF50';
+        indicator.style.color = 'white';
+        indicator.style.fontWeight = 'bold';
+        indicator.style.transition = 'all 0.3s ease';
+        indicator.style.opacity = '0.7';
+        indicator.innerHTML = '🔄 Авто-обновление';
+        document.body.appendChild(indicator);
+      }
+      indicator.style.display = 'block';
+    } else {
+      if (indicator) {
+        indicator.style.display = 'none';
+      }
+    }
+  }
+
+  // Обновление баланса и интерфейса
+  updateBalance() {
+    try {
+      // Обновляем дашборд если функция доступна
+      if (typeof window.updateDashboard === 'function') {
+        window.updateDashboard();
+      }
+      
+      // Пересчитываем баланс если функция доступна  
+      if (typeof window.calculateBalance === 'function') {
+        window.calculateBalance();
+      }
+      
+      // Обновляем баланс если функция доступна
+      if (typeof window.updateBalance === 'function') {
+        window.updateBalance();
+      }
+      
+      // Обновляем историю транзакций если функция доступна
+      if (typeof window.renderTransactionHistory === 'function') {
+        window.renderTransactionHistory();
+      }
+      
+      // Отправляем событие обновления
+      window.dispatchEvent(new Event('balanceUpdated'));
+      
+    } catch (error) {
+      // Не логируем ошибки чтобы не засорять консоль
+      // console.error('❌ Ошибка обновления баланса:', error);
     }
   }
 
@@ -858,6 +953,9 @@ class FirebaseSync {
 
   // Улучшенная очистка всех данных с сохранением в Firebase
   async clearAllData() {
+    // Останавливаем автоматическое обновление баланса
+    this.stopBalanceAutoUpdate();
+    
     if (!this.isInitialized || !this.isOnline) {
       console.log('⚠️ Очистка без подключения к Firebase - только локально');
       // Локальная очистка
@@ -1058,6 +1156,37 @@ window.exportData = function() {
 window.importData = function(data) {
   if (window.firebaseSync) {
     window.firebaseSync.importData(data);
+  } else {
+    console.log('⚠️ Firebase синхронизация не инициализирована');
+  }
+};
+
+// Управление автоматическим обновлением баланса
+window.startBalanceAutoUpdate = function() {
+  if (window.firebaseSync) {
+    window.firebaseSync.startBalanceAutoUpdate();
+  } else {
+    console.log('⚠️ Firebase синхронизация не инициализирована');
+  }
+};
+
+window.stopBalanceAutoUpdate = function() {
+  if (window.firebaseSync) {
+    window.firebaseSync.stopBalanceAutoUpdate();
+  } else {
+    console.log('⚠️ Firebase синхронизация не инициализирована');
+  }
+};
+
+window.toggleBalanceAutoUpdate = function() {
+  if (window.firebaseSync) {
+    if (window.firebaseSync.balanceUpdateInterval) {
+      window.firebaseSync.stopBalanceAutoUpdate();
+      console.log('💰 Автоматическое обновление баланса отключено');
+    } else {
+      window.firebaseSync.startBalanceAutoUpdate();
+      console.log('💰 Автоматическое обновление баланса включено');
+    }
   } else {
     console.log('⚠️ Firebase синхронизация не инициализирована');
   }
