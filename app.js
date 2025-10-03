@@ -3,12 +3,25 @@
 // Глобальные переменные для автообновления
 window.autoUpdateInterval = null;
 window.autoUpdateCounter = 0;
+window.lastTransactionsCount = 0; // Для отслеживания изменений количества транзакций
+window.lastTransactionsHash = null; // Для отслеживания изменений содержимого
+
+// Функция создания простого хеша для транзакций
+function createTransactionsHash(transactions) {
+  return transactions.map(t => `${t.id}_${t.amount}_${t.date}`).sort().join('|');
+}
 
 // Функция обновления баланса
 function updateBalance() {
   try {
     // ТОЛЬКО обновляем баланс и статистику - НЕ ТРОГАЕМ СПИСОК ТРАНЗАКЦИЙ
     const latestTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    
+    // Проверяем изменилось ли количество или содержимое транзакций
+    const currentCount = latestTransactions.length;
+    const currentHash = createTransactionsHash(latestTransactions);
+    const transactionsChanged = (window.lastTransactionsCount !== currentCount) || 
+                               (window.lastTransactionsHash !== currentHash);
     
     if (typeof window !== 'undefined' && window.transactions !== undefined) {
       window.transactions = latestTransactions;
@@ -24,6 +37,25 @@ function updateBalance() {
     balanceElements.forEach((element) => {
       element.textContent = `${totalBalance.toFixed(2)} zł`;
     });
+    
+    // Если транзакции изменились (Firebase синхронизация), обновляем список
+    if (transactionsChanged && window.lastTransactionsCount >= 0) {
+      if (window.autoUpdateCounter % 10 === 1 || transactionsChanged) {
+        console.log(`🔄 Обнаружены изменения в транзакциях, обновляем список`);
+      }
+      if (typeof renderTransactions === 'function') {
+        renderTransactions();
+      }
+      if (typeof updateChartsAndStats === 'function') {
+        updateChartsAndStats();
+      }
+      if (typeof renderBudgetIndicators === 'function') {
+        renderBudgetIndicators();
+      }
+    }
+    
+    window.lastTransactionsCount = currentCount;
+    window.lastTransactionsHash = currentHash;
     
     // Обновляем только статистику (доходы/расходы)
     const currentMonth = new Date().getMonth();
@@ -71,18 +103,23 @@ window.startAutoUpdate = function() {
     clearInterval(window.autoUpdateInterval);
   }
   
+  // Инициализируем отслеживание транзакций при запуске
+  const initialTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+  window.lastTransactionsCount = initialTransactions.length;
+  window.lastTransactionsHash = createTransactionsHash(initialTransactions);
+  
   window.autoUpdateInterval = setInterval(() => {
     window.autoUpdateCounter++;
     
     // Тихий режим - логируем только каждое 30-е обновление
     if (window.autoUpdateCounter % 30 === 1) {
-      console.log(`💰 Тихое автообновление #${window.autoUpdateCounter} - только баланс и статистика`);
+      console.log(`💰 Умное автообновление #${window.autoUpdateCounter} - отслеживаем все изменения`);
     }
     
-    updateBalance(); // Только баланс и статистика, НЕ список транзакций
+    updateBalance(); // Баланс + автоматическое обновление списка при любых изменениях
   }, 2000); // Каждые 2 секунды
   
-  console.log('✅ Тихое автообновление запущено (только баланс)');
+  console.log('✅ Умное автообновление запущено (баланс + отслеживание всех изменений)');
   return true;
 };
 
