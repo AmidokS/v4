@@ -34,6 +34,151 @@
   margin: 20px; /* Отступы от краев экрана */
 }
 
+/* Улучшенная мобильная адаптация с более агрессивными правилами */
+@media screen and (max-width: 1400px) and (pointer: coarse) {
+  /* Правила для сенсорных устройств с шириной до 1400px */
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 16px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+  
+  .btn {
+    padding: 16px 24px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+}
+
+@media screen and (max-width: 1300px) {
+  /* Адаптация для экранов до 1300px */
+  .container {
+    max-width: 100%;
+    padding: 10px;
+  }
+  
+  .main-content {
+    padding: 15px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .transactions-container {
+    height: calc(100vh - 300px);
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  /* Мобильная адаптация для флагманских Android устройств */
+  body {
+    font-size: 16px; /* Предотвращаем зум на iOS */
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 16px;
+    font-size: 16px; /* Предотвращаем зум на iOS */
+    border-radius: 8px;
+    min-height: 48px;
+  }
+  
+  .btn {
+    padding: 16px 24px;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 8px;
+  }
+  
+  .transaction-item {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .category-badge {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .person-badge {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+@media screen and (max-width: 1100px) {
+  /* Дополнительная адаптация для широких мобильных экранов */
+  .header {
+    padding: 15px 20px;
+  }
+  
+  .header h1 {
+    font-size: 24px;
+  }
+  
+  .stats-card {
+    padding: 20px;
+  }
+  
+  .stats-card h3 {
+    font-size: 18px;
+  }
+  
+  .stats-card .amount {
+    font-size: 24px;
+  }
+}
+
+/* Специальные правила для высокоразрешающих мобильных экранов */
+@media screen and (max-width: 1000px) and (min-resolution: 2dppx) {
+  /* Правила для Retina и подобных дисплеев */
+  .container {
+    padding: 8px;
+  }
+  
+  .transaction-item {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .btn {
+    border-radius: 10px;
+    font-weight: 500;
+  }
+}
+
+/* Правила для устройств с соотношением сторон больше 1.5:1 (мобильные) */
+@media screen and (min-aspect-ratio: 1/1.5) {
+  .mobile-device .form-group input,
+  .mobile-device .form-group select {
+    padding: 18px;
+    font-size: 16px;
+  }
+  
+  .mobile-device .btn {
+    padding: 18px 28px;
+    min-height: 50px;
+  }
+}
+
+/* Поддержка устройств POCO и Xiaomi */
+@supports (-webkit-touch-callout: none) {
+  /* Правила для WebKit мобильных браузеров */
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    transform: none; /* Предотвращаем зум */
+  }
+}
+
 /* Адаптация для мобильных устройств */
 /* Используем более широкий диапазон для современных смартфонов */
 @media (max-width: 1024px) and (pointer: coarse) {
@@ -4885,4 +5030,100 @@ select.filter-control-analytics option {
   0% { transform: scale(1); }
   50% { transform: scale(1.02); }
   100% { transform: scale(1); }
+}
+
+/* ========== ПЛАВНЫЕ АНИМАЦИИ ДЛЯ ТРАНЗАКЦИЙ ========== */
+
+/* Анимация появления транзакций при загрузке */
+.transaction-item {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: transactionFadeIn 0.4s ease-out forwards;
+}
+
+/* Задержки для последовательного появления */
+.transaction-item:nth-child(1) { animation-delay: 0.05s; }
+.transaction-item:nth-child(2) { animation-delay: 0.1s; }
+.transaction-item:nth-child(3) { animation-delay: 0.15s; }
+.transaction-item:nth-child(4) { animation-delay: 0.2s; }
+.transaction-item:nth-child(5) { animation-delay: 0.25s; }
+.transaction-item:nth-child(6) { animation-delay: 0.3s; }
+.transaction-item:nth-child(7) { animation-delay: 0.35s; }
+.transaction-item:nth-child(8) { animation-delay: 0.4s; }
+.transaction-item:nth-child(n+9) { animation-delay: 0.45s; }
+
+@keyframes transactionFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Анимация контейнера транзакций */
+#transactionsList {
+  transition: all 0.3s ease;
+}
+
+/* Плавная анимация обновления */
+.transactions-updating {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.transactions-updated {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Анимация для новых транзакций */
+.transaction-item.new-transaction {
+  animation: newTransactionPulse 0.6s ease-out;
+  border-left: 3px solid #28a745;
+}
+
+@keyframes newTransactionPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+  }
+}
+
+/* Анимация загрузки */
+.transactions-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.transactions-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: loading-shimmer 1.5s infinite;
+  z-index: 1;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }

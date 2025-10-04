@@ -8,19 +8,87 @@ window.lastTransactionsHash = null; // Для отслеживания изме�
 
 // Определение мобильного устройства
 function isMobileDevice() {
-  // Проверяем user agent
+  // Проверяем User Agent на наличие мобильных паттернов
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
   
-  // Проверяем touch support
-  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  // Расширенные паттерны для мобильных устройств
+  const mobilePatterns = [
+    /android/i,
+    /webos/i,
+    /iphone/i,
+    /ipad/i,
+    /ipod/i,
+    /blackberry/i,
+    /windows phone/i,
+    /mobile/i,
+    /tablet/i,
+    // Специально для современных Android флагманов
+    /xiaomi/i,
+    /redmi/i,
+    /poco/i,
+    /oneplus/i,
+    /samsung/i,
+    /huawei/i,
+    /honor/i,
+    /oppo/i,
+    /vivo/i,
+    /realme/i
+  ];
   
-  // Проверяем размер экрана (учитываем высокие разрешения современных флагманов)
+  // Проверяем паттерны в User Agent
+  const isMobileUA = mobilePatterns.some(pattern => pattern.test(userAgent));
+  
+  // Проверяем поддержку тач-событий
+  const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+  
+  // Более агрессивная проверка размера экрана для высокоразрешающих устройств
   const screenWidth = window.screen.width;
+  const screenHeight = window.screen.height;
   const viewportWidth = window.innerWidth;
-  const isNarrowScreen = Math.min(screenWidth, viewportWidth) < 1200;
+  const viewportHeight = window.innerHeight;
   
-  return mobileRegex.test(userAgent) || (hasTouch && isNarrowScreen);
+  // Учитываем высокоразрешающие экраны современных смартфонов
+  const isNarrowScreen = viewportWidth <= 1200 || screenWidth <= 1200;
+  const isTallScreen = (screenHeight / screenWidth) > 1.5 || (viewportHeight / viewportWidth) > 1.5;
+  
+  // Детекция на основе соотношения сторон экрана (типично для мобильных)
+  const aspectRatio = Math.max(screenWidth, screenHeight) / Math.min(screenWidth, screenHeight);
+  const isMobileAspectRatio = aspectRatio > 1.5;
+  
+  // Проверяем pixel ratio (современные флагманы имеют высокий DPR)
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const isHighDPR = devicePixelRatio >= 2;
+  
+  // Специальная детекция для POCO X6 Pro и подобных устройств
+  const isPocoDevice = /poco.*x6.*pro/i.test(userAgent) || /poco/i.test(userAgent);
+  
+  // Комбинированная логика детекции
+  const isMobile = isMobileUA || 
+                   (hasTouchSupport && isNarrowScreen) ||
+                   (hasTouchSupport && isTallScreen) ||
+                   (hasTouchSupport && isMobileAspectRatio) ||
+                   (isHighDPR && isNarrowScreen && hasTouchSupport) ||
+                   isPocoDevice;
+
+  console.log('📱 Mobile detection details:', {
+    userAgent: userAgent,
+    isMobileUA: isMobileUA,
+    hasTouchSupport: hasTouchSupport,
+    screenWidth: screenWidth,
+    screenHeight: screenHeight,
+    viewportWidth: viewportWidth,
+    viewportHeight: viewportHeight,
+    isNarrowScreen: isNarrowScreen,
+    isTallScreen: isTallScreen,
+    aspectRatio: aspectRatio,
+    isMobileAspectRatio: isMobileAspectRatio,
+    devicePixelRatio: devicePixelRatio,
+    isHighDPR: isHighDPR,
+    isPocoDevice: isPocoDevice,
+    finalResult: isMobile
+  });
+
+  return isMobile;
 }
 
 // Добавляем класс для мобильных устройств
@@ -1438,6 +1506,9 @@ function renderTransactions() {
   const container = document.getElementById("transactionsList");
   if (!container) return;
 
+  // Добавляем класс загрузки для плавности
+  container.classList.add('transactions-loading');
+
   // Используем новую систему фильтрации
   let filteredTransactions = getFilteredTransactions();
 
@@ -1488,70 +1559,85 @@ function renderTransactions() {
   sortedTransactions = sortedTransactions.slice(0, 50);
   setupTransactionFilters();
 
-  container.innerHTML = "";
+  // Плавная очистка контейнера
+  setTimeout(() => {
+    container.innerHTML = "";
+    container.classList.remove('transactions-loading');
 
-  if (sortedTransactions.length === 0) {
-    container.innerHTML = `
-      <div class="transaction-item" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; background: none; border: none; box-shadow: none;">
-        <div style="margin-bottom: 12px;">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    if (sortedTransactions.length === 0) {
+      container.innerHTML = `
+        <div class="transaction-item empty-state">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; background: none; border: none; box-shadow: none;">
+            <div style="margin-bottom: 12px;">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </div>
+            <div style="color: var(--text-muted); font-size: 1.1em; margin-bottom: 4px;">Нет операций</div>
+            <div style="color: var(--text-muted); font-size: 0.95em;">Добавьте первую операцию, чтобы начать вести бюджет!</div>
+          </div>
         </div>
-        <div style="color: var(--text-muted); font-size: 1.1em; margin-bottom: 4px;">Нет операций</div>
-        <div style="color: var(--text-muted); font-size: 0.95em;">Добавьте первую операцию, чтобы начать вести бюджет!</div>
-      </div>
-    `;
-    return;
-  }
-
-  sortedTransactions.forEach((transaction) => {
-    const transactionElement = document.createElement("div");
-    transactionElement.className = `transaction-item ${
-      transaction.type === "income" ? "transaction-income" : "transaction-expense"
-    }`;
-    transactionElement.setAttribute("data-id", transaction.id);
-
-    const categoryObj = categories.find(
-      (cat) => cat.name === transaction.category && cat.type === transaction.type
-    );
-
-    let formattedDate = "Без даты";
-    if (transaction.date) {
-      const d = new Date(transaction.date);
-      if (!isNaN(d.getTime())) {
-        formattedDate = formatDate(d);
-      }
+      `;
+      return;
     }
 
-    transactionElement.innerHTML = `
-      <div class="transaction-info">
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-          <span class="category-badge" style="background: ${categoryObj?.color || "#6d28d9"}">
-            ${categoryObj?.icon || "💰"} ${transaction.category}
-          </span>
-          <span class="person-badge">${getPersonName(transaction.person)}</span>
-        </div>
-        <div style="color: var(--text-muted); font-size: 0.9em;">
-          ${transaction.description || "Без описания"}
-        </div>
-        <div style="color: var(--text-muted); font-size: 0.8em;">
-          ${formattedDate}
-        </div>
-      </div>
-      <div class="transaction-amount ${transaction.type === "income" ? "income" : "expense"}">
-        ${transaction.type === "income" ? "+" : "-"}${formatCurrency(transaction.amount)}
-      </div>
-      <div class="transaction-actions">
-        <button onclick="editTransaction('${transaction.id}')" title="Редактировать">
-          ✏️
-        </button>
-        <button onclick="deleteTransactionDirect('${transaction.id}')" title="Удалить" style="color: #ef4444;">
-          🗑️
-        </button>
-      </div>
-    `;
+    sortedTransactions.forEach((transaction, index) => {
+      const transactionElement = createTransactionElement(transaction, index);
+      container.appendChild(transactionElement);
+    });
+  }, 100); // Небольшая задержка для плавности
+}
 
-    container.appendChild(transactionElement);
-  });
+// Функция создания элемента транзакции с анимацией
+function createTransactionElement(transaction, index) {
+  const transactionElement = document.createElement("div");
+  transactionElement.className = `transaction-item ${
+    transaction.type === "income" ? "transaction-income" : "transaction-expense"
+  }`;
+  transactionElement.setAttribute("data-id", transaction.id);
+  
+  // Добавляем стили для анимации
+  transactionElement.style.animationDelay = `${Math.min(index * 0.05, 0.5)}s`;
+
+  const categoryObj = categories.find(
+    (cat) => cat.name === transaction.category && cat.type === transaction.type
+  );
+
+  let formattedDate = "Без даты";
+  if (transaction.date) {
+    const d = new Date(transaction.date);
+    if (!isNaN(d.getTime())) {
+      formattedDate = formatDate(d);
+    }
+  }
+
+  transactionElement.innerHTML = `
+    <div class="transaction-info">
+      <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <span class="category-badge" style="background: ${categoryObj?.color || "#6d28d9"}">
+          ${categoryObj?.icon || "💰"} ${transaction.category}
+        </span>
+        <span class="person-badge">${getPersonName(transaction.person)}</span>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.9em;">
+        ${transaction.description || "Без описания"}
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.8em;">
+        ${formattedDate}
+      </div>
+    </div>
+    <div class="transaction-amount ${transaction.type === "income" ? "income" : "expense"}">
+      ${transaction.type === "income" ? "+" : "-"}${formatCurrency(transaction.amount)}
+    </div>
+    <div class="transaction-actions">
+      <button onclick="editTransaction('${transaction.id}')" title="Редактировать">
+        ✏️
+      </button>
+      <button onclick="deleteTransactionDirect('${transaction.id}')" title="Удалить" style="color: #ef4444;">
+        🗑️
+      </button>
+    </div>
+  `;
+
+  return transactionElement;
 }
 
 // Инициализация фильтров по месяцам и дням
