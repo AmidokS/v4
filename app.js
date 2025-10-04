@@ -11,7 +11,7 @@ function isMobileDevice() {
   // Проверяем User Agent на наличие мобильных паттернов
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
   
-  // Расширенные паттерны для мобильных устройств
+  // Ультра-расширенные паттерны для мобильных устройств
   const mobilePatterns = [
     /android/i,
     /webos/i,
@@ -32,7 +32,14 @@ function isMobileDevice() {
     /honor/i,
     /oppo/i,
     /vivo/i,
-    /realme/i
+    /realme/i,
+    /mi /i,
+    /miui/i,
+    // Дополнительные паттерны для POCO
+    /poco x6/i,
+    /poco.*pro/i,
+    /android.*poco/i,
+    /linux.*android/i
   ];
   
   // Проверяем паттерны в User Agent
@@ -41,38 +48,52 @@ function isMobileDevice() {
   // Проверяем поддержку тач-событий
   const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
   
-  // Более агрессивная проверка размера экрана для высокоразрешающих устройств
+  // Ультра-агрессивная проверка размера экрана
   const screenWidth = window.screen.width;
   const screenHeight = window.screen.height;
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   
-  // Учитываем высокоразрешающие экраны современных смартфонов
-  const isNarrowScreen = viewportWidth <= 1200 || screenWidth <= 1200;
-  const isTallScreen = (screenHeight / screenWidth) > 1.5 || (viewportHeight / viewportWidth) > 1.5;
+  // Считаем мобильным любой экран уже 1400px с тачем
+  const isNarrowScreen = viewportWidth <= 1400 || screenWidth <= 1400;
+  const isTallScreen = (screenHeight / screenWidth) > 1.3 || (viewportHeight / viewportWidth) > 1.3;
   
-  // Детекция на основе соотношения сторон экрана (типично для мобильных)
+  // Детекция на основе соотношения сторон экрана
   const aspectRatio = Math.max(screenWidth, screenHeight) / Math.min(screenWidth, screenHeight);
-  const isMobileAspectRatio = aspectRatio > 1.5;
+  const isMobileAspectRatio = aspectRatio > 1.3; // Более мягкое условие
   
   // Проверяем pixel ratio (современные флагманы имеют высокий DPR)
   const devicePixelRatio = window.devicePixelRatio || 1;
-  const isHighDPR = devicePixelRatio >= 2;
+  const isHighDPR = devicePixelRatio >= 1.5; // Снижаем порог
   
-  // Специальная детекция для POCO X6 Pro и подобных устройств
-  const isPocoDevice = /poco.*x6.*pro/i.test(userAgent) || /poco/i.test(userAgent);
+  // Специальная агрессивная детекция для POCO и Xiaomi
+  const isPocoDevice = /poco/i.test(userAgent) || /xiaomi/i.test(userAgent) || /miui/i.test(userAgent);
+  const isAndroidDevice = /android/i.test(userAgent);
   
-  // Комбинированная логика детекции
+  // Дополнительная проверка через платформу
+  const platform = navigator.platform || '';
+  const isMobilePlatform = /android|linux armv/i.test(platform);
+  
+  // Проверка через connection API (если доступно)
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const isMobileConnection = connection && connection.effectiveType && ['slow-2g', '2g', '3g'].includes(connection.effectiveType);
+  
+  // Ультра-агрессивная комбинированная логика
   const isMobile = isMobileUA || 
+                   isPocoDevice ||
+                   (isAndroidDevice && hasTouchSupport) ||
                    (hasTouchSupport && isNarrowScreen) ||
                    (hasTouchSupport && isTallScreen) ||
                    (hasTouchSupport && isMobileAspectRatio) ||
                    (isHighDPR && isNarrowScreen && hasTouchSupport) ||
-                   isPocoDevice;
+                   (hasTouchSupport && isMobilePlatform) ||
+                   isMobileConnection;
 
-  console.log('📱 Mobile detection details:', {
+  console.log('📱 Ultra-aggressive mobile detection:', {
     userAgent: userAgent,
     isMobileUA: isMobileUA,
+    isPocoDevice: isPocoDevice,
+    isAndroidDevice: isAndroidDevice,
     hasTouchSupport: hasTouchSupport,
     screenWidth: screenWidth,
     screenHeight: screenHeight,
@@ -84,7 +105,10 @@ function isMobileDevice() {
     isMobileAspectRatio: isMobileAspectRatio,
     devicePixelRatio: devicePixelRatio,
     isHighDPR: isHighDPR,
-    isPocoDevice: isPocoDevice,
+    platform: platform,
+    isMobilePlatform: isMobilePlatform,
+    connectionType: connection?.effectiveType,
+    isMobileConnection: isMobileConnection,
     finalResult: isMobile
   });
 
@@ -94,6 +118,50 @@ function isMobileDevice() {
 // Добавляем класс для мобильных устройств
 if (isMobileDevice()) {
   document.documentElement.classList.add('mobile-device');
+  document.body.classList.add('mobile-device');
+  
+  // Принудительное применение мобильных стилей для проблемных устройств
+  const userAgent = navigator.userAgent || '';
+  const isProblematicDevice = /poco|xiaomi|miui|android/i.test(userAgent) && window.innerWidth <= 1400;
+  
+  if (isProblematicDevice) {
+    console.log('🔧 Применяем принудительную мобилизацию для:', userAgent);
+    
+    // Принудительно применяем мобильные стили через JavaScript
+    const forceMobileStyles = () => {
+      document.documentElement.style.fontSize = '16px';
+      document.body.style.fontSize = '16px';
+      
+      // Применяем мобильные стили ко всем формам
+      const inputs = document.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        input.style.padding = '18px';
+        input.style.fontSize = '16px';
+        input.style.minHeight = '50px';
+        input.style.borderRadius = '10px';
+      });
+      
+      // Применяем мобильные стили ко всем кнопкам
+      const buttons = document.querySelectorAll('.btn, button');
+      buttons.forEach(btn => {
+        btn.style.padding = '18px 28px';
+        btn.style.fontSize = '16px';
+        btn.style.minHeight = '52px';
+        btn.style.borderRadius = '10px';
+      });
+      
+      // Принудительно устанавливаем viewport для мобильных
+      let viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+    };
+    
+    // Применяем стили сразу и после загрузки DOM
+    forceMobileStyles();
+    document.addEventListener('DOMContentLoaded', forceMobileStyles);
+  }
+  
   console.log('📱 Обнаружено мобильное устройство');
 } else {
   document.documentElement.classList.add('desktop-device');
@@ -1512,8 +1580,20 @@ function renderTransactions() {
   // Используем новую систему фильтрации
   let filteredTransactions = getFilteredTransactions();
 
-  // Получаем настройки сортировки из localStorage или используем по умолчанию
-  const sortSettings = JSON.parse(localStorage.getItem('transactionSortSettings') || '{"field": "date", "direction": "desc"}');
+  // Получаем настройки сортировки из select элемента или localStorage
+  let sortSettings;
+  const sortSelect = document.getElementById("sortTransactions");
+  
+  if (sortSelect && sortSelect.value) {
+    // Парсим значение из select (формат: "field-direction")
+    const [field, direction] = sortSelect.value.split('-');
+    sortSettings = { field, direction };
+    // Сохраняем в localStorage для сохранения между сессиями
+    localStorage.setItem('transactionSortSettings', JSON.stringify(sortSettings));
+  } else {
+    // Используем сохраненные настройки или по умолчанию
+    sortSettings = JSON.parse(localStorage.getItem('transactionSortSettings') || '{"field": "date", "direction": "desc"}');
+  }
   
   // Применяем сортировку в зависимости от настроек
   let sortedTransactions = [...filteredTransactions];
@@ -1653,24 +1733,48 @@ function setupTransactionFilters() {
     filterDay.value = today;
   }
 
+  // Получаем свежие данные из localStorage
+  const currentTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+  
   // Собираем уникальные месяцы из транзакций
   const monthsSet = new Set();
-  transactions.forEach((t) => {
+  currentTransactions.forEach((t) => {
     if (t.date) {
       const d = new Date(t.date);
-      const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const monthStr = `${d.getMonth()}`;
       monthsSet.add(monthStr);
     }
   });
-  const months = Array.from(monthsSet).sort().reverse();
+  
+  const months = Array.from(monthsSet).sort((a, b) => parseInt(b) - parseInt(a));
+  const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
+                     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+  
   filterMonth.innerHTML = '<option value="">Все месяцы</option>' +
-    months.map((m) => `<option value="${m}">${m.replace("-", " / ")}</option>`).join("");
+    months.map((m) => `<option value="${m}">${monthNames[parseInt(m)]}</option>`).join("");
 
-  filterMonth.onchange = () => renderTransactions();
-  filterDay.onchange = () => renderTransactions();
+  // Обработчики событий
+  filterMonth.onchange = () => {
+    console.log('Фильтр по месяцу изменен:', filterMonth.value);
+    renderTransactions();
+  };
+  
+  filterDay.onchange = () => {
+    console.log('Фильтр по дню изменен:', filterDay.value);
+    renderTransactions();
+  };
+  
   clearBtn.onclick = () => {
+    console.log('Очистка фильтров');
     filterMonth.value = "";
-    filterDay.value = today; // Возвращаем сегодняшнюю дату при сбросе
+    filterDay.value = ""; // Убираем автоматическую установку сегодняшней даты
+    
+    // Сбрасываем сортировку на значение по умолчанию
+    const sortSelect = document.getElementById("sortTransactions");
+    if (sortSelect) {
+      sortSelect.value = "date-desc";
+      localStorage.setItem('transactionSortSettings', JSON.stringify({"field": "date", "direction": "desc"}));
+    }
     
     // Очищаем также расширенные фильтры, если они есть
     if (window.currentAdvancedFilters) {
@@ -1683,7 +1787,14 @@ function setupTransactionFilters() {
   // Обработчик сортировки
   const sortSelect = document.getElementById("sortTransactions");
   if (sortSelect && !sortSelect.dataset.listenerAdded) {
-    sortSelect.addEventListener("change", renderTransactions);
+    // Восстанавливаем сохраненную сортировку
+    const savedSort = JSON.parse(localStorage.getItem('transactionSortSettings') || '{"field": "date", "direction": "desc"}');
+    sortSelect.value = `${savedSort.field}-${savedSort.direction}`;
+    
+    sortSelect.addEventListener("change", () => {
+      console.log('Сортировка изменена:', sortSelect.value);
+      renderTransactions();
+    });
     sortSelect.dataset.listenerAdded = "true";
   }
 }
@@ -4600,20 +4711,31 @@ function getFilteredTransactions() {
   const filterMonthElement = document.getElementById("filterMonth");
   const filterDayElement = document.getElementById("filterDay");
   
-  if (filterMonthElement && filterMonthElement.value) {
-    const filterMonth = filterMonthElement.value;
+  if (filterMonthElement && filterMonthElement.value !== "") {
+    const filterMonth = parseInt(filterMonthElement.value);
+    console.log('Применяем фильтр по месяцу:', filterMonth);
     filtered = filtered.filter(t => {
+      if (!t.date) return false;
       const transactionDate = new Date(t.date);
-      return transactionDate.getMonth() === parseInt(filterMonth) && 
-             transactionDate.getFullYear() === new Date().getFullYear();
+      const match = transactionDate.getMonth() === filterMonth && 
+                   transactionDate.getFullYear() === new Date().getFullYear();
+      console.log(`Транзакция ${t.id}: дата ${t.date}, месяц ${transactionDate.getMonth()}, соответствует фильтру: ${match}`);
+      return match;
     });
   }
   
   if (filterDayElement && filterDayElement.value) {
     const filterDay = filterDayElement.value;
-    filtered = filtered.filter(t => t.date === filterDay);
+    console.log('Применяем фильтр по дню:', filterDay);
+    filtered = filtered.filter(t => {
+      const match = t.date === filterDay;
+      console.log(`Транзакция ${t.id}: дата ${t.date}, соответствует фильтру дня: ${match}`);
+      return match;
+    });
   }
   
+  console.log(`После применения фильтров: ${filtered.length} из ${JSON.parse(localStorage.getItem('transactions') || '[]').length} транзакций`);
+
   // Применяем расширенные фильтры, если они есть
   if (window.currentAdvancedFilters) {
     const filters = window.currentAdvancedFilters;
@@ -4653,9 +4775,7 @@ function getFilteredTransactions() {
   }
   
   return filtered;
-}
-
-// Очистка расширенных фильтров
+}// Очистка расширенных фильтров
 function clearAdvancedFilters() {
   document.getElementById('searchText').value = '';
   document.getElementById('filterType').value = '';

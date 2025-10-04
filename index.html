@@ -2,7 +2,7 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>💰 Наш Бюджет - Совместный контроль финансов</title>
     
     <!-- PWA Meta Tags -->
@@ -729,6 +729,35 @@
           </div>
           <div class="card transactions-card">
             <div id="collapse-transactions">
+              <!-- Фильтры для транзакций -->
+              <div class="transaction-filters">
+                <div class="filters-row">
+                  <div class="filter-group">
+                    <label for="filterMonth">📅 Месяц:</label>
+                    <select id="filterMonth" class="filter-select">
+                      <option value="">Все месяцы</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <label for="filterDay">📅 День:</label>
+                    <input type="date" id="filterDay" class="filter-input">
+                  </div>
+                  <div class="filter-group">
+                    <label for="sortTransactions">🔄 Сортировка:</label>
+                    <select id="sortTransactions" class="filter-select">
+                      <option value="date-desc">По дате (новые сверху)</option>
+                      <option value="date-asc">По дате (старые сверху)</option>
+                      <option value="amount-desc">По сумме (большие сверху)</option>
+                      <option value="amount-asc">По сумме (малые сверху)</option>
+                      <option value="category-asc">По категории (А-Я)</option>
+                      <option value="category-desc">По категории (Я-А)</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <button id="clearFiltersBtn" class="btn btn-secondary">🗑️ Очистить</button>
+                  </div>
+                </div>
+              </div>
               <!-- Операции отсортированы по умолчанию: новые сверху, старые снизу -->
               <div class="transactions-list" id="transactionsList">
                 <!-- Транзакции будут здесь -->

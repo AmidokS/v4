@@ -34,7 +34,53 @@
   margin: 20px; /* Отступы от краев экрана */
 }
 
-/* Улучшенная мобильная адаптация с более агрессивными правилами */
+/* Ультра-агрессивная мобильная адаптация для POCO и подобных устройств */
+@media screen and (max-width: 1600px) and (pointer: coarse) {
+  /* Принудительная мобилизация для всех тач-устройств до 1600px */
+  body.mobile-device,
+  html.mobile-device {
+    font-size: 16px !important;
+  }
+  
+  .mobile-device .form-group input,
+  .mobile-device .form-group select,
+  .mobile-device .form-group textarea {
+    padding: 18px !important;
+    font-size: 16px !important;
+    min-height: 50px !important;
+    border-radius: 10px !important;
+  }
+  
+  .mobile-device .btn {
+    padding: 18px 28px !important;
+    font-size: 16px !important;
+    min-height: 52px !important;
+    border-radius: 10px !important;
+  }
+}
+
+@media screen and (max-width: 1500px) and (pointer: coarse) {
+  /* Специально для POCO X6 Pro и флагманов с широким экраном */
+  .container {
+    max-width: 100% !important;
+    padding: 12px !important;
+  }
+  
+  .main-content {
+    padding: 16px !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .panel-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
 @media screen and (max-width: 1400px) and (pointer: coarse) {
   /* Правила для сенсорных устройств с шириной до 1400px */
   .form-group {
@@ -176,6 +222,73 @@
   .form-group select:focus,
   .form-group textarea:focus {
     transform: none; /* Предотвращаем зум */
+  }
+}
+
+/* Принудительные мобильные стили для проблемных устройств */
+.mobile-device {
+  /* Принудительно применяем мобильную типографику */
+  font-size: 16px !important;
+}
+
+.mobile-device .form-group input,
+.mobile-device .form-group select,
+.mobile-device .form-group textarea {
+  padding: 18px !important;
+  font-size: 16px !important;
+  min-height: 50px !important;
+  border-radius: 10px !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+.mobile-device .btn,
+.mobile-device button {
+  padding: 18px 28px !important;
+  font-size: 16px !important;
+  min-height: 52px !important;
+  border-radius: 10px !important;
+  font-weight: 500 !important;
+}
+
+.mobile-device .container {
+  max-width: 100% !important;
+  padding: 12px !important;
+}
+
+.mobile-device .main-content {
+  padding: 16px !important;
+}
+
+.mobile-device .stats-grid {
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+
+.mobile-device .panel-grid {
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+
+.mobile-device .transaction-item {
+  padding: 16px !important;
+  margin-bottom: 12px !important;
+  border-radius: 12px !important;
+}
+
+.mobile-device .modal-content {
+  width: 95% !important;
+  max-width: 95% !important;
+  margin: 20px auto !important;
+  border-radius: 16px !important;
+}
+
+/* Специальные правила для Android WebView */
+@media screen and (-webkit-min-device-pixel-ratio: 1.5) {
+  .mobile-device * {
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
   }
 }
 
@@ -5051,6 +5164,74 @@ select.filter-control-analytics option {
 .transaction-item:nth-child(7) { animation-delay: 0.35s; }
 .transaction-item:nth-child(8) { animation-delay: 0.4s; }
 .transaction-item:nth-child(n+9) { animation-delay: 0.45s; }
+
+/* Стили для фильтров транзакций */
+.transaction-filters {
+  padding: 15px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 10px;
+  border-radius: 8px 8px 0 0;
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.filter-select,
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.filter-group .btn {
+  margin-top: 0;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .transaction-filters {
+    padding: 12px;
+  }
+}
 
 @keyframes transactionFadeIn {
   0% {
