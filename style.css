@@ -35,23 +35,41 @@
 }
 
 /* Ультра-агрессивная мобильная адаптация для POCO и подобных устройств */
-@media screen and (max-width: 1600px) and (pointer: coarse) {
+@media screen and (max-width: 1600px) and (pointer: coarse),
+       screen and (max-width: 1600px) and (hover: none),
+       screen and (max-width: 1600px) and (-webkit-min-device-pixel-ratio: 1.5) {
   /* Принудительная мобилизация для всех тач-устройств до 1600px */
-  body.mobile-device,
-  html.mobile-device {
+  body,
+  html {
     font-size: 16px !important;
   }
   
-  .mobile-device .form-group input,
-  .mobile-device .form-group select,
-  .mobile-device .form-group textarea {
+  .container {
+    max-width: 100% !important;
+    padding: 12px !important;
+  }
+  
+  .main-content {
+    padding: 16px !important;
+  }
+  
+  .stats-grid,
+  .panel-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
     padding: 18px !important;
     font-size: 16px !important;
     min-height: 50px !important;
     border-radius: 10px !important;
   }
   
-  .mobile-device .btn {
+  .btn,
+  button {
     padding: 18px 28px !important;
     font-size: 16px !important;
     min-height: 52px !important;
@@ -59,7 +77,8 @@
   }
 }
 
-@media screen and (max-width: 1500px) and (pointer: coarse) {
+@media screen and (max-width: 1500px) and (pointer: coarse),
+       screen and (max-width: 1500px) and (hover: none) {
   /* Специально для POCO X6 Pro и флагманов с широким экраном */
   .container {
     max-width: 100% !important;
@@ -226,14 +245,22 @@
 }
 
 /* Принудительные мобильные стили для проблемных устройств */
-.mobile-device {
+.mobile-device,
+.force-mobile,
+.poco-device {
   /* Принудительно применяем мобильную типографику */
   font-size: 16px !important;
 }
 
 .mobile-device .form-group input,
 .mobile-device .form-group select,
-.mobile-device .form-group textarea {
+.mobile-device .form-group textarea,
+.force-mobile .form-group input,
+.force-mobile .form-group select,
+.force-mobile .form-group textarea,
+.poco-device .form-group input,
+.poco-device .form-group select,
+.poco-device .form-group textarea {
   padding: 18px !important;
   font-size: 16px !important;
   min-height: 50px !important;
@@ -244,7 +271,11 @@
 }
 
 .mobile-device .btn,
-.mobile-device button {
+.mobile-device button,
+.force-mobile .btn,
+.force-mobile button,
+.poco-device .btn,
+.poco-device button {
   padding: 18px 28px !important;
   font-size: 16px !important;
   min-height: 52px !important;
@@ -252,41 +283,67 @@
   font-weight: 500 !important;
 }
 
-.mobile-device .container {
+.mobile-device .container,
+.force-mobile .container,
+.poco-device .container {
   max-width: 100% !important;
   padding: 12px !important;
 }
 
-.mobile-device .main-content {
+.mobile-device .main-content,
+.force-mobile .main-content,
+.poco-device .main-content {
   padding: 16px !important;
 }
 
-.mobile-device .stats-grid {
+.mobile-device .stats-grid,
+.force-mobile .stats-grid,
+.poco-device .stats-grid {
   grid-template-columns: 1fr !important;
   gap: 16px !important;
 }
 
-.mobile-device .panel-grid {
+.mobile-device .panel-grid,
+.force-mobile .panel-grid,
+.poco-device .panel-grid {
   grid-template-columns: 1fr !important;
   gap: 16px !important;
 }
 
-.mobile-device .transaction-item {
+.mobile-device .transaction-item,
+.force-mobile .transaction-item,
+.poco-device .transaction-item {
   padding: 16px !important;
   margin-bottom: 12px !important;
   border-radius: 12px !important;
 }
 
-.mobile-device .modal-content {
+.mobile-device .modal-content,
+.force-mobile .modal-content,
+.poco-device .modal-content {
   width: 95% !important;
   max-width: 95% !important;
   margin: 20px auto !important;
   border-radius: 16px !important;
 }
 
+/* Экстра принудительные стили для POCO устройств */
+.poco-device * {
+  box-sizing: border-box !important;
+}
+
+.poco-device .header,
+.poco-device .stats-container,
+.poco-device .transactions-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 /* Специальные правила для Android WebView */
 @media screen and (-webkit-min-device-pixel-ratio: 1.5) {
-  .mobile-device * {
+  .mobile-device *,
+  .force-mobile *,
+  .poco-device * {
     -webkit-text-size-adjust: none !important;
     text-size-adjust: none !important;
   }

@@ -48,23 +48,23 @@ function isMobileDevice() {
   // Проверяем поддержку тач-событий
   const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
   
-  // Ультра-агрессивная проверка размера экрана
+  // КРИТИЧЕСКИ агрессивная проверка размера экрана
   const screenWidth = window.screen.width;
   const screenHeight = window.screen.height;
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   
-  // Считаем мобильным любой экран уже 1400px с тачем
-  const isNarrowScreen = viewportWidth <= 1400 || screenWidth <= 1400;
-  const isTallScreen = (screenHeight / screenWidth) > 1.3 || (viewportHeight / viewportWidth) > 1.3;
+  // Считаем мобильным практически любой экран с тачем
+  const isNarrowScreen = viewportWidth <= 1600 || screenWidth <= 1600; // Увеличили до 1600px!
+  const isTallScreen = (screenHeight / screenWidth) > 1.2 || (viewportHeight / viewportWidth) > 1.2;
   
   // Детекция на основе соотношения сторон экрана
   const aspectRatio = Math.max(screenWidth, screenHeight) / Math.min(screenWidth, screenHeight);
-  const isMobileAspectRatio = aspectRatio > 1.3; // Более мягкое условие
+  const isMobileAspectRatio = aspectRatio > 1.2; // Еще более мягкое условие
   
-  // Проверяем pixel ratio (современные флагманы имеют высокий DPR)
+  // Проверяем pixel ratio
   const devicePixelRatio = window.devicePixelRatio || 1;
-  const isHighDPR = devicePixelRatio >= 1.5; // Снижаем порог
+  const isHighDPR = devicePixelRatio >= 1.25; // Очень низкий порог
   
   // Специальная агрессивная детекция для POCO и Xiaomi
   const isPocoDevice = /poco/i.test(userAgent) || /xiaomi/i.test(userAgent) || /miui/i.test(userAgent);
@@ -78,18 +78,20 @@ function isMobileDevice() {
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const isMobileConnection = connection && connection.effectiveType && ['slow-2g', '2g', '3g'].includes(connection.effectiveType);
   
-  // Ультра-агрессивная комбинированная логика
+  // МАКСИМАЛЬНО агрессивная комбинированная логика
   const isMobile = isMobileUA || 
                    isPocoDevice ||
                    (isAndroidDevice && hasTouchSupport) ||
                    (hasTouchSupport && isNarrowScreen) ||
                    (hasTouchSupport && isTallScreen) ||
                    (hasTouchSupport && isMobileAspectRatio) ||
-                   (isHighDPR && isNarrowScreen && hasTouchSupport) ||
+                   (isHighDPR && hasTouchSupport) || // Убрали проверку экрана
                    (hasTouchSupport && isMobilePlatform) ||
-                   isMobileConnection;
+                   isMobileConnection ||
+                   // FORCE: Если есть touch и ширина меньше 2000px - считаем мобильным!
+                   (hasTouchSupport && viewportWidth < 2000);
 
-  console.log('📱 Ultra-aggressive mobile detection:', {
+  console.log('📱 MAXIMUM AGGRESSIVE mobile detection:', {
     userAgent: userAgent,
     isMobileUA: isMobileUA,
     isPocoDevice: isPocoDevice,
@@ -122,44 +124,82 @@ if (isMobileDevice()) {
   
   // Принудительное применение мобильных стилей для проблемных устройств
   const userAgent = navigator.userAgent || '';
-  const isProblematicDevice = /poco|xiaomi|miui|android/i.test(userAgent) && window.innerWidth <= 1400;
+  const isProblematicDevice = /poco|xiaomi|miui|android/i.test(userAgent) && window.innerWidth <= 1600;
   
   if (isProblematicDevice) {
-    console.log('🔧 Применяем принудительную мобилизацию для:', userAgent);
+    console.log('🔧 ФОРСИРОВАННАЯ МОБИЛИЗАЦИЯ для:', userAgent);
     
     // Принудительно применяем мобильные стили через JavaScript
     const forceMobileStyles = () => {
-      document.documentElement.style.fontSize = '16px';
-      document.body.style.fontSize = '16px';
+      console.log('🎨 Применяем принудительные стили...');
+      
+      // Основные стили
+      document.documentElement.style.setProperty('font-size', '16px', 'important');
+      document.body.style.setProperty('font-size', '16px', 'important');
+      
+      // Принуждаем контейнер к мобильному виду
+      const containers = document.querySelectorAll('.container, .main-content');
+      containers.forEach(container => {
+        container.style.setProperty('max-width', '100%', 'important');
+        container.style.setProperty('padding', '12px', 'important');
+      });
+      
+      // Принуждаем сетки к одной колонке
+      const grids = document.querySelectorAll('.stats-grid, .panel-grid');
+      grids.forEach(grid => {
+        grid.style.setProperty('grid-template-columns', '1fr', 'important');
+        grid.style.setProperty('gap', '16px', 'important');
+      });
       
       // Применяем мобильные стили ко всем формам
       const inputs = document.querySelectorAll('input, select, textarea');
       inputs.forEach(input => {
-        input.style.padding = '18px';
-        input.style.fontSize = '16px';
-        input.style.minHeight = '50px';
-        input.style.borderRadius = '10px';
+        input.style.setProperty('padding', '18px', 'important');
+        input.style.setProperty('font-size', '16px', 'important');
+        input.style.setProperty('min-height', '50px', 'important');
+        input.style.setProperty('border-radius', '10px', 'important');
       });
       
       // Применяем мобильные стили ко всем кнопкам
       const buttons = document.querySelectorAll('.btn, button');
       buttons.forEach(btn => {
-        btn.style.padding = '18px 28px';
-        btn.style.fontSize = '16px';
-        btn.style.minHeight = '52px';
-        btn.style.borderRadius = '10px';
+        btn.style.setProperty('padding', '18px 28px', 'important');
+        btn.style.setProperty('font-size', '16px', 'important');
+        btn.style.setProperty('min-height', '52px', 'important');
+        btn.style.setProperty('border-radius', '10px', 'important');
       });
       
       // Принудительно устанавливаем viewport для мобильных
       let viewport = document.querySelector('meta[name="viewport"]');
       if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
       }
+      
+      // Добавляем дополнительные классы для CSS
+      document.body.classList.add('force-mobile', 'poco-device');
+      
+      console.log('✅ Принудительные стили применены');
     };
     
-    // Применяем стили сразу и после загрузки DOM
+    // Применяем стили немедленно и отслеживаем изменения DOM
     forceMobileStyles();
+    
+    // Повторяем при любых изменениях DOM
+    const observer = new MutationObserver(() => {
+      setTimeout(forceMobileStyles, 100);
+    });
+    
+    // Применяем при загрузке и изменениях
     document.addEventListener('DOMContentLoaded', forceMobileStyles);
+    window.addEventListener('load', forceMobileStyles);
+    window.addEventListener('resize', forceMobileStyles);
+    
+    // Наблюдаем за изменениями DOM
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    });
   }
   
   console.log('📱 Обнаружено мобильное устройство');
@@ -176,6 +216,45 @@ function createTransactionsHash(transactions) {
     .sort()
     .join('|');
 }
+
+// Диагностическая функция для отладки POCO проблем
+function diagnosticInfo() {
+  const info = {
+    userAgent: navigator.userAgent,
+    vendor: navigator.vendor,
+    platform: navigator.platform,
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio,
+    touchSupport: 'ontouchstart' in window,
+    maxTouchPoints: navigator.maxTouchPoints,
+    connection: navigator.connection?.effectiveType,
+    documentClasses: document.documentElement.className,
+    bodyClasses: document.body?.className || 'body not ready',
+    isMobileDetected: document.documentElement.classList.contains('mobile-device')
+  };
+  
+  console.log('🔍 ДИАГНОСТИКА УСТРОЙСТВА:', info);
+  
+  // Проверяем, применились ли мобильные стили
+  setTimeout(() => {
+    const container = document.querySelector('.container');
+    const computedStyle = container ? window.getComputedStyle(container) : null;
+    
+    console.log('🎨 ПРИМЕНЁННЫЕ СТИЛИ:', {
+      containerMaxWidth: computedStyle?.maxWidth,
+      containerPadding: computedStyle?.padding,
+      fontSize: window.getComputedStyle(document.body).fontSize
+    });
+  }, 1000);
+  
+  return info;
+}
+
+// Вызываем диагностику
+diagnosticInfo();
 
 // Функция обновления баланса
 function updateBalance() {
@@ -1171,9 +1250,8 @@ function initApp() {
   updateCategorySelects();
   setupIconPicker();
   setupEventListeners();
-  setupTransactionFilters();
   initializeSettings();
-  renderTransactions(); // Вызываем после настройки фильтров
+  renderTransactions(); // Вызываем после настройки
   renderQuickTemplates(); // Инициализируем шаблоны
   renderRecurringTransactions(); // Инициализируем повторяющиеся операции
   checkAndExecuteRecurringTransactions(); // Проверяем просроченные операции
@@ -1577,67 +1655,18 @@ function renderTransactions() {
   // Добавляем класс загрузки для плавности
   container.classList.add('transactions-loading');
 
-  // Используем новую систему фильтрации
-  let filteredTransactions = getFilteredTransactions();
-
-  // Получаем настройки сортировки из select элемента или localStorage
-  let sortSettings;
-  const sortSelect = document.getElementById("sortTransactions");
+  // Получаем свежие данные из localStorage
+  let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
   
-  if (sortSelect && sortSelect.value) {
-    // Парсим значение из select (формат: "field-direction")
-    const [field, direction] = sortSelect.value.split('-');
-    sortSettings = { field, direction };
-    // Сохраняем в localStorage для сохранения между сессиями
-    localStorage.setItem('transactionSortSettings', JSON.stringify(sortSettings));
-  } else {
-    // Используем сохраненные настройки или по умолчанию
-    sortSettings = JSON.parse(localStorage.getItem('transactionSortSettings') || '{"field": "date", "direction": "desc"}');
-  }
-  
-  // Применяем сортировку в зависимости от настроек
-  let sortedTransactions = [...filteredTransactions];
-  
-  sortedTransactions.sort((a, b) => {
-    let aValue, bValue;
-    
-    switch (sortSettings.field) {
-      case 'date':
-        aValue = new Date(a.date || 0);
-        bValue = new Date(b.date || 0);
-        break;
-      case 'amount':
-        aValue = parseFloat(a.amount) || 0;
-        bValue = parseFloat(b.amount) || 0;
-        break;
-      case 'type':
-        aValue = a.type || '';
-        bValue = b.type || '';
-        break;
-      case 'category':
-        aValue = a.category || '';
-        bValue = b.category || '';
-        break;
-      case 'description':
-        aValue = a.description || '';
-        bValue = b.description || '';
-        break;
-      default:
-        aValue = new Date(a.date || 0);
-        bValue = new Date(b.date || 0);
-    }
-    
-    // Применяем направление сортировки
-    if (sortSettings.direction === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
+  // Простая сортировка по дате (новые сверху)
+  let sortedTransactions = [...transactions].sort((a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    return dateB - dateA; // Новые сверху
   });
   
   // Ограничиваем количество показываемых транзакций
   sortedTransactions = sortedTransactions.slice(0, 50);
-  setupTransactionFilters();
 
   // Плавная очистка контейнера
   setTimeout(() => {
