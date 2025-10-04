@@ -201,6 +201,62 @@ window.forceUpdateTransactionsList = function() {
   }
 };
 
+// ========== УПРАВЛЕНИЕ СОРТИРОВКОЙ ТРАНЗАКЦИЙ ==========
+
+// Функция обновления настроек сортировки
+function updateTransactionSorting() {
+  const fieldSelect = document.getElementById('transactionSortField');
+  const directionSelect = document.getElementById('transactionSortDirection');
+  
+  if (!fieldSelect || !directionSelect) {
+    console.error('❌ Элементы сортировки не найдены');
+    return;
+  }
+  
+  const sortSettings = {
+    field: fieldSelect.value,
+    direction: directionSelect.value
+  };
+  
+  // Сохраняем настройки в localStorage
+  localStorage.setItem('transactionSortSettings', JSON.stringify(sortSettings));
+  
+  // Применяем сортировку немедленно
+  renderTransactions();
+  
+  // Показываем уведомление
+  if (typeof showNotification === 'function') {
+    const fieldText = fieldSelect.options[fieldSelect.selectedIndex].text;
+    const directionText = directionSelect.options[directionSelect.selectedIndex].text;
+    showNotification(`✅ Сортировка применена: ${fieldText}, ${directionText}`, 'success');
+  }
+  
+  console.log('✅ Настройки сортировки обновлены:', sortSettings);
+}
+
+// Функция инициализации настроек сортировки
+function initTransactionSorting() {
+  const fieldSelect = document.getElementById('transactionSortField');
+  const directionSelect = document.getElementById('transactionSortDirection');
+  
+  if (!fieldSelect || !directionSelect) {
+    return; // Элементы не найдены, возможно мы не на странице настроек
+  }
+  
+  // Загружаем сохраненные настройки
+  const savedSettings = JSON.parse(localStorage.getItem('transactionSortSettings') || '{"field": "date", "direction": "desc"}');
+  
+  // Устанавливаем значения в селекты
+  fieldSelect.value = savedSettings.field;
+  directionSelect.value = savedSettings.direction;
+  
+  // Добавляем обработчики изменений
+  fieldSelect.addEventListener('change', updateTransactionSorting);
+  directionSelect.addEventListener('change', updateTransactionSorting);
+  
+  console.log('✅ Настройки сортировки инициализированы:', savedSettings);
+}
+
 // Функция остановки автообновления
 window.stopAutoUpdate = function() {
   if (window.autoUpdateInterval) {
@@ -229,6 +285,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
+  // Инициализируем настройки сортировки
+  setTimeout(() => {
+    initTransactionSorting();
+  }, 500);
+  
   setTimeout(() => {
     window.startAutoUpdate();
   }, 1000);
@@ -250,6 +311,11 @@ if (document.readyState !== 'loading') {
       setTimeout(() => updateBalance(), 100);
     }
   });
+  
+  // Инициализируем настройки сортировки
+  setTimeout(() => {
+    initTransactionSorting();
+  }, 200);
   
   setTimeout(() => {
     window.startAutoUpdate();
@@ -1375,9 +1441,50 @@ function renderTransactions() {
   // Используем новую систему фильтрации
   let filteredTransactions = getFilteredTransactions();
 
-  // Сортировка: всегда по дате (новые сверху) для главного блока
+  // Получаем настройки сортировки из localStorage или используем по умолчанию
+  const sortSettings = JSON.parse(localStorage.getItem('transactionSortSettings') || '{"field": "date", "direction": "desc"}');
+  
+  // Применяем сортировку в зависимости от настроек
   let sortedTransactions = [...filteredTransactions];
-  sortedTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  sortedTransactions.sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (sortSettings.field) {
+      case 'date':
+        aValue = new Date(a.date || 0);
+        bValue = new Date(b.date || 0);
+        break;
+      case 'amount':
+        aValue = parseFloat(a.amount) || 0;
+        bValue = parseFloat(b.amount) || 0;
+        break;
+      case 'type':
+        aValue = a.type || '';
+        bValue = b.type || '';
+        break;
+      case 'category':
+        aValue = a.category || '';
+        bValue = b.category || '';
+        break;
+      case 'description':
+        aValue = a.description || '';
+        bValue = b.description || '';
+        break;
+      default:
+        aValue = new Date(a.date || 0);
+        bValue = new Date(b.date || 0);
+    }
+    
+    // Применяем направление сортировки
+    if (sortSettings.direction === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
+  });
+  
+  // Ограничиваем количество показываемых транзакций
   sortedTransactions = sortedTransactions.slice(0, 50);
   setupTransactionFilters();
 

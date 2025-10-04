@@ -535,6 +535,42 @@
             </button>
           </div>
 
+          <!-- Настройки сортировки транзакций -->
+          <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--card-border);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <span>🔄</span>
+              <strong>Сортировка операций</strong>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9em; margin: 0 0 15px 0;">
+              Настройка порядка отображения операций на главной странице
+            </p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+              <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 5px; font-size: 0.9em;">Сортировать по:</label>
+                <select id="transactionSortField" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text);">
+                  <option value="date">Дате</option>
+                  <option value="amount">Сумме</option>
+                  <option value="type">Типу (доход/расход)</option>
+                  <option value="category">Категории</option>
+                  <option value="description">Описанию</option>
+                </select>
+              </div>
+              
+              <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 5px; font-size: 0.9em;">Порядок:</label>
+                <select id="transactionSortDirection" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text);">
+                  <option value="desc">По убыванию (новые сверху)</option>
+                  <option value="asc">По возрастанию (старые сверху)</option>
+                </select>
+              </div>
+            </div>
+            
+            <button onclick="updateTransactionSorting()" class="btn btn-primary" style="width: 100%; font-size: 0.9em;">
+              ✅ Применить сортировку
+            </button>
+          </div>
+
           <div style="margin-top: 15px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 10px; border: 1px solid rgba(220, 53, 69, 0.3);">
             <h4 style="color: #dc3545; margin-bottom: 10px;">⚠️ Опасная зона</h4>
             <button
