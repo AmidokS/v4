@@ -8,204 +8,15 @@ window.lastTransactionsHash = null; // Для отслеживания изме�
 
 // Определение мобильного устройства
 function isMobileDevice() {
-  // Проверяем User Agent на наличие мобильных паттернов
-  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-  
-  // Ультра-расширенные паттерны для мобильных устройств
-  const mobilePatterns = [
-    /android/i,
-    /webos/i,
-    /iphone/i,
-    /ipad/i,
-    /ipod/i,
-    /blackberry/i,
-    /windows phone/i,
-    /mobile/i,
-    /tablet/i,
-    // Специально для современных Android флагманов
-    /xiaomi/i,
-    /redmi/i,
-    /poco/i,
-    /oneplus/i,
-    /samsung/i,
-    /huawei/i,
-    /honor/i,
-    /oppo/i,
-    /vivo/i,
-    /realme/i,
-    /mi /i,
-    /miui/i,
-    // Дополнительные паттерны для POCO
-    /poco x6/i,
-    /poco.*pro/i,
-    /android.*poco/i,
-    /linux.*android/i
-  ];
-  
-  // Проверяем паттерны в User Agent
-  const isMobileUA = mobilePatterns.some(pattern => pattern.test(userAgent));
-  
-  // Проверяем поддержку тач-событий
-  const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-  
-  // КРИТИЧЕСКИ агрессивная проверка размера экрана
-  const screenWidth = window.screen.width;
-  const screenHeight = window.screen.height;
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  
-  // Считаем мобильным практически любой экран с тачем
-  const isNarrowScreen = viewportWidth <= 1600 || screenWidth <= 1600; // Увеличили до 1600px!
-  const isTallScreen = (screenHeight / screenWidth) > 1.2 || (viewportHeight / viewportWidth) > 1.2;
-  
-  // Детекция на основе соотношения сторон экрана
-  const aspectRatio = Math.max(screenWidth, screenHeight) / Math.min(screenWidth, screenHeight);
-  const isMobileAspectRatio = aspectRatio > 1.2; // Еще более мягкое условие
-  
-  // Проверяем pixel ratio
-  const devicePixelRatio = window.devicePixelRatio || 1;
-  const isHighDPR = devicePixelRatio >= 1.25; // Очень низкий порог
-  
-  // Специальная агрессивная детекция для POCO и Xiaomi
-  const isPocoDevice = /poco/i.test(userAgent) || /xiaomi/i.test(userAgent) || /miui/i.test(userAgent);
-  const isAndroidDevice = /android/i.test(userAgent);
-  
-  // Дополнительная проверка через платформу
-  const platform = navigator.platform || '';
-  const isMobilePlatform = /android|linux armv/i.test(platform);
-  
-  // Проверка через connection API (если доступно)
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const isMobileConnection = connection && connection.effectiveType && ['slow-2g', '2g', '3g'].includes(connection.effectiveType);
-  
-  // МАКСИМАЛЬНО агрессивная комбинированная логика
-  const isMobile = isMobileUA || 
-                   isPocoDevice ||
-                   (isAndroidDevice && hasTouchSupport) ||
-                   (hasTouchSupport && isNarrowScreen) ||
-                   (hasTouchSupport && isTallScreen) ||
-                   (hasTouchSupport && isMobileAspectRatio) ||
-                   (isHighDPR && hasTouchSupport) || // Убрали проверку экрана
-                   (hasTouchSupport && isMobilePlatform) ||
-                   isMobileConnection ||
-                   // FORCE: Если есть touch и ширина меньше 2000px - считаем мобильным!
-                   (hasTouchSupport && viewportWidth < 2000);
-
-  console.log('📱 MAXIMUM AGGRESSIVE mobile detection:', {
-    userAgent: userAgent,
-    isMobileUA: isMobileUA,
-    isPocoDevice: isPocoDevice,
-    isAndroidDevice: isAndroidDevice,
-    hasTouchSupport: hasTouchSupport,
-    screenWidth: screenWidth,
-    screenHeight: screenHeight,
-    viewportWidth: viewportWidth,
-    viewportHeight: viewportHeight,
-    isNarrowScreen: isNarrowScreen,
-    isTallScreen: isTallScreen,
-    aspectRatio: aspectRatio,
-    isMobileAspectRatio: isMobileAspectRatio,
-    devicePixelRatio: devicePixelRatio,
-    isHighDPR: isHighDPR,
-    platform: platform,
-    isMobilePlatform: isMobilePlatform,
-    connectionType: connection?.effectiveType,
-    isMobileConnection: isMobileConnection,
-    finalResult: isMobile
-  });
-
-  return isMobile;
+  // Простая проверка - мобильная детекция уже выполнена в mobile-detection.js
+  return document.documentElement.classList.contains('mobile-device');
 }
 
-// Добавляем класс для мобильных устройств
+// Простая инициализация - мобильная детекция уже выполнена в mobile-detection.js
 if (isMobileDevice()) {
-  document.documentElement.classList.add('mobile-device');
-  document.body.classList.add('mobile-device');
-  
-  // Принудительное применение мобильных стилей для проблемных устройств
-  const userAgent = navigator.userAgent || '';
-  const isProblematicDevice = /poco|xiaomi|miui|android/i.test(userAgent) && window.innerWidth <= 1600;
-  
-  if (isProblematicDevice) {
-    console.log('🔧 ФОРСИРОВАННАЯ МОБИЛИЗАЦИЯ для:', userAgent);
-    
-    // Принудительно применяем мобильные стили через JavaScript
-    const forceMobileStyles = () => {
-      console.log('🎨 Применяем принудительные стили...');
-      
-      // Основные стили
-      document.documentElement.style.setProperty('font-size', '16px', 'important');
-      document.body.style.setProperty('font-size', '16px', 'important');
-      
-      // Принуждаем контейнер к мобильному виду
-      const containers = document.querySelectorAll('.container, .main-content');
-      containers.forEach(container => {
-        container.style.setProperty('max-width', '100%', 'important');
-        container.style.setProperty('padding', '12px', 'important');
-      });
-      
-      // Принуждаем сетки к одной колонке
-      const grids = document.querySelectorAll('.stats-grid, .panel-grid');
-      grids.forEach(grid => {
-        grid.style.setProperty('grid-template-columns', '1fr', 'important');
-        grid.style.setProperty('gap', '16px', 'important');
-      });
-      
-      // Применяем мобильные стили ко всем формам
-      const inputs = document.querySelectorAll('input, select, textarea');
-      inputs.forEach(input => {
-        input.style.setProperty('padding', '18px', 'important');
-        input.style.setProperty('font-size', '16px', 'important');
-        input.style.setProperty('min-height', '50px', 'important');
-        input.style.setProperty('border-radius', '10px', 'important');
-      });
-      
-      // Применяем мобильные стили ко всем кнопкам
-      const buttons = document.querySelectorAll('.btn, button');
-      buttons.forEach(btn => {
-        btn.style.setProperty('padding', '18px 28px', 'important');
-        btn.style.setProperty('font-size', '16px', 'important');
-        btn.style.setProperty('min-height', '52px', 'important');
-        btn.style.setProperty('border-radius', '10px', 'important');
-      });
-      
-      // Принудительно устанавливаем viewport для мобильных
-      let viewport = document.querySelector('meta[name="viewport"]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      }
-      
-      // Добавляем дополнительные классы для CSS
-      document.body.classList.add('force-mobile', 'poco-device');
-      
-      console.log('✅ Принудительные стили применены');
-    };
-    
-    // Применяем стили немедленно и отслеживаем изменения DOM
-    forceMobileStyles();
-    
-    // Повторяем при любых изменениях DOM
-    const observer = new MutationObserver(() => {
-      setTimeout(forceMobileStyles, 100);
-    });
-    
-    // Применяем при загрузке и изменениях
-    document.addEventListener('DOMContentLoaded', forceMobileStyles);
-    window.addEventListener('load', forceMobileStyles);
-    window.addEventListener('resize', forceMobileStyles);
-    
-    // Наблюдаем за изменениями DOM
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true
-    });
-  }
-  
-  console.log('📱 Обнаружено мобильное устройство');
+  console.log('📱 Мобильное устройство обнаружено через mobile-detection.js');
 } else {
-  document.documentElement.classList.add('desktop-device');
-  console.log('🖥️ Обнаружено десктопное устройство');
+  console.log('�️ Десктопное устройство обнаружено');
 }
 
 // Функция создания детального хеша для транзакций
@@ -238,19 +49,185 @@ function diagnosticInfo() {
   
   console.log('🔍 ДИАГНОСТИКА УСТРОЙСТВА:', info);
   
+  // Создаём визуальную диагностику на экране
+  createMobileDiagnosticPanel(info);
+  
   // Проверяем, применились ли мобильные стили
   setTimeout(() => {
     const container = document.querySelector('.container');
     const computedStyle = container ? window.getComputedStyle(container) : null;
     
-    console.log('🎨 ПРИМЕНЁННЫЕ СТИЛИ:', {
+    const styleInfo = {
       containerMaxWidth: computedStyle?.maxWidth,
       containerPadding: computedStyle?.padding,
       fontSize: window.getComputedStyle(document.body).fontSize
-    });
+    };
+    
+    console.log('🎨 ПРИМЕНЁННЫЕ СТИЛИ:', styleInfo);
+    updateDiagnosticPanel(styleInfo);
   }, 1000);
   
   return info;
+}
+
+// Создаём панель диагностики прямо в интерфейсе
+function createMobileDiagnosticPanel(info) {
+  // Удаляем старую панель если есть
+  const oldPanel = document.getElementById('diagnostic-panel');
+  if (oldPanel) oldPanel.remove();
+  
+  const panel = document.createElement('div');
+  panel.id = 'diagnostic-panel';
+  panel.style.cssText = `
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    background: #1a1a1a;
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    z-index: 10000;
+    max-height: 40vh;
+    overflow-y: auto;
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  `;
+  
+  const isMobile = document.documentElement.classList.contains('mobile-device');
+  
+  panel.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <span style="color: #00ff00; font-weight: bold;">📱 ДИАГНОСТИКА POCO</span>
+      <button onclick="document.getElementById('diagnostic-panel').remove()" 
+              style="background: #ff0000; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">✕</button>
+    </div>
+    
+    <div style="margin-bottom: 10px;">
+      <strong>Статус мобилизации:</strong> 
+      <span style="color: ${isMobile ? '#00ff00' : '#ff0000'};">
+        ${isMobile ? '✅ МОБИЛЬНОЕ' : '❌ ДЕСКТОПНОЕ'}
+      </span>
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>User Agent:</strong><br>
+      <div style="font-size: 10px; word-break: break-all;">${info.userAgent}</div>
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>Размеры экрана:</strong> ${info.screenWidth}x${info.screenHeight}
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>Viewport:</strong> ${info.viewportWidth}x${info.viewportHeight}
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>Device Pixel Ratio:</strong> ${info.devicePixelRatio}
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>Touch Support:</strong> ${info.touchSupport ? '✅' : '❌'}
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>Max Touch Points:</strong> ${info.maxTouchPoints}
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>Platform:</strong> ${info.platform}
+    </div>
+    
+    <div style="margin-bottom: 5px;">
+      <strong>CSS классы HTML:</strong><br>
+      <div style="font-size: 10px;">${info.documentClasses}</div>
+    </div>
+    
+    <div style="margin-bottom: 10px;">
+      <strong>CSS классы Body:</strong><br>
+      <div style="font-size: 10px;">${info.bodyClasses}</div>
+    </div>
+    
+    <div id="style-info" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #00ff00;">
+      <div style="color: #ffff00;">⏳ Загрузка информации о стилях...</div>
+    </div>
+    
+    <div style="margin-top: 15px;">
+      <button onclick="forceMobileMode()" 
+              style="background: #00aa00; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%;">
+        🔧 ПРИНУДИТЕЛЬНАЯ МОБИЛИЗАЦИЯ
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(panel);
+}
+
+// Обновляем информацию о стилях в панели
+function updateDiagnosticPanel(styleInfo) {
+  const styleDiv = document.getElementById('style-info');
+  if (styleDiv) {
+    const container = document.querySelector('.container');
+    const grid = document.querySelector('.stats-grid');
+    const isCorrectlyMobilized = 
+      styleInfo.containerMaxWidth === '100%' && 
+      window.getComputedStyle(grid || {}).gridTemplateColumns === '1fr';
+    
+    styleDiv.innerHTML = `
+      <div style="color: #ffff00; margin-bottom: 5px;"><strong>🎨 ПРИМЕНЁННЫЕ СТИЛИ:</strong></div>
+      <div>Container max-width: <span style="color: ${styleInfo.containerMaxWidth === '100%' ? '#00ff00' : '#ff0000'}">${styleInfo.containerMaxWidth}</span></div>
+      <div>Container padding: ${styleInfo.containerPadding}</div>
+      <div>Body font-size: ${styleInfo.fontSize}</div>
+      <div>Grid columns: ${window.getComputedStyle(grid || {}).gridTemplateColumns}</div>
+      <div style="margin-top: 10px;">
+        <strong>Статус:</strong> 
+        <span style="color: ${isCorrectlyMobilized ? '#00ff00' : '#ff0000'};">
+          ${isCorrectlyMobilized ? '✅ ПРАВИЛЬНО МОБИЛИЗОВАН' : '❌ НУЖНА КОРРЕКЦИЯ'}
+        </span>
+      </div>
+    `;
+  }
+}
+
+// Функция принудительной мобилизации, вызываемая кнопкой
+function forceMobileMode() {
+  console.log('🔧 ПРИНУДИТЕЛЬНАЯ МОБИЛИЗАЦИЯ ЗАПУЩЕНА');
+  
+  // Добавляем все классы
+  document.documentElement.classList.add('mobile-device');
+  document.body.classList.add('mobile-device', 'force-mobile', 'poco-device');
+  
+  // Принудительные стили
+  const containers = document.querySelectorAll('.container');
+  containers.forEach(c => {
+    c.style.setProperty('max-width', '100%', 'important');
+    c.style.setProperty('padding', '12px', 'important');
+  });
+  
+  const grids = document.querySelectorAll('.stats-grid, .panel-grid');
+  grids.forEach(g => {
+    g.style.setProperty('grid-template-columns', '1fr', 'important');
+    g.style.setProperty('gap', '16px', 'important');
+  });
+  
+  // Обновляем диагностику
+  setTimeout(() => {
+    const container = document.querySelector('.container');
+    const computedStyle = container ? window.getComputedStyle(container) : null;
+    
+    const styleInfo = {
+      containerMaxWidth: computedStyle?.maxWidth,
+      containerPadding: computedStyle?.padding,
+      fontSize: window.getComputedStyle(document.body).fontSize
+    };
+    
+    updateDiagnosticPanel(styleInfo);
+  }, 500);
+  
+  alert('✅ Принудительная мобилизация выполнена!\nПроверьте изменения в интерфейсе.');
 }
 
 // Вызываем диагностику

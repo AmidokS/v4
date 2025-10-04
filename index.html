@@ -17,6 +17,9 @@
     <link rel="icon" type="image/svg+xml" sizes="16x16" href="icons/icon-16x16.svg" />
     <link rel="apple-touch-icon" href="icons/icon-192x192.svg" />
     
+    <!-- МОБИЛЬНАЯ ДЕТЕКЦИЯ - загружается первой -->
+    <script src="mobile-detection.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Firebase SDK - множественные fallbacks -->
@@ -35,6 +38,7 @@
     
     <link rel="stylesheet" href="gradient-settings.css" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="mobile.css" />
     <script src="firebase-sync.js"></script>
     <script src="touch-gestures.js"></script>
   </head>
@@ -747,6 +751,14 @@
               title="Свернуть/развернуть"
             >
               ▼
+            </button>
+          </div>
+          
+          <!-- Диагностическая кнопка для мобильных устройств -->
+          <div style="margin-bottom: 10px;">
+            <button onclick="diagnosticInfo()" 
+                    style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+              📱 Диагностика устройства
             </button>
           </div>
           <div class="card budget-usage-card">
